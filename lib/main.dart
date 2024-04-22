@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import '/common/common.dart';
 import 'screens/home_page.dart';
-import 'screens/sdcard.dart';
 
 void main() {
   runApp(const MyApp());
