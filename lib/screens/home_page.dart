@@ -260,7 +260,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                             context,
                                             CupertinoPageRoute(
                                                 builder: (context) =>
-                                                    const DocumentScreen(
+                                                    DocumentScreen(
                                                       title: 'On My iPhone',
                                                     )),
                                           );
