@@ -160,10 +160,13 @@ class _BrowseState extends State<Browse> {
                             return listTile(
                                 locValue.contains('emulated')
                                     ? 'On My iPhone'
-                                    : locValue
-                                        .split("storage/")[1]
-                                        .split("/")[0]
-                                        .trim(),
+                                    : index == 1
+                                        ? 'SD Card'
+                                        : storages[index]
+                                            .toString()
+                                            .split("storage/")[1]
+                                            .split("/")[0]
+                                            .trim(),
                                 locValue.contains('emulated')
                                     ? CupertinoIcons.device_phone_portrait
                                     : CupertinoIcons.tray,
