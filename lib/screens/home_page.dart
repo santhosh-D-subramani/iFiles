@@ -5,9 +5,12 @@ import 'package:disk_space/disk_space.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:xfiles/screens/browse_page.dart';
 
 import '../widgets/expandable_widget.dart';
 import 'documents_screen.dart';
@@ -24,11 +27,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   Future<List<File>>? _files;
-  List<Directory> storages = [];
-  double _diskSpace = 0;
-  double _totalDiskSpace = 0;
-  Map<Directory, double> _directorySpace = {};
-  Map<Directory, double> _directorySpace2 = {};
 
   //request permission-->
   Future<bool> requestStoragePermission() async {
@@ -38,35 +36,6 @@ class _MyHomePageState extends State<MyHomePage> {
       return result.isGranted;
     }
     return true;
-  }
-
-  void getFileDetails(String path1) {
-    File file = File(path1);
-
-    // Get the file size
-    int fileSizeInBytes = file.lengthSync();
-    double fileSizeInKB = fileSizeInBytes / 1024; // Convert bytes to kilobytes
-    double fileSizeInMB = fileSizeInKB / 1024; // Convert kilobytes to megabytes
-
-    if (kDebugMode) {
-      print('File Size:');
-    }
-    if (kDebugMode) {
-      print('Bytes: $fileSizeInBytes');
-    }
-    if (kDebugMode) {
-      print('KB: $fileSizeInKB');
-    }
-    if (kDebugMode) {
-      print('MB: $fileSizeInMB');
-    }
-
-    // Get the file location (path)
-    String filePath = file.path;
-
-    if (kDebugMode) {
-      print('File Location (Path): $filePath');
-    }
   }
 
   Future<List<File>> getRecentFilesFromExternalStorage() async {
@@ -99,60 +68,10 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  Future<void> initDiskSpace() async {
-    double diskSpace, totalDiskSpace = 0;
-
-    diskSpace = (await DiskSpace.getFreeDiskSpace)!;
-    totalDiskSpace = (await DiskSpace.getTotalDiskSpace)!;
-    List<Directory> directories;
-    Map<Directory, double> directorySpace = {};
-    Map<Directory, double> directorySpace2 = {};
-    directories = await getExternalStorageDirectories().then(
-      (list) async => list ?? [await getApplicationDocumentsDirectory()],
-    );
-
-    for (var directory in directories) {
-      var space = await DiskSpace.getFreeDiskSpaceForPath(directory.path);
-      directorySpace.addEntries([MapEntry(directory, space!)]);
-    }
-    for (var directory in directories) {
-      var space = await DiskSpace.getTotalDiskSpaceForPath(directory.path);
-      directorySpace2.addEntries([MapEntry(directory, space!)]);
-    }
-    if (!mounted) return;
-
-    setState(() {
-      _diskSpace = diskSpace / (1024);
-      _totalDiskSpace = totalDiskSpace / (1024);
-      _directorySpace = directorySpace;
-      _directorySpace2 = directorySpace2;
-    });
-  }
-
-  void getAllStorages() async {
-    List<Directory> storagesTemp = (await getExternalStorageDirectories())!;
-    storagesTemp = storagesTemp.map((Directory e) {
-      final List<String> splitedPath = e.path.split("/");
-      return Directory(splitedPath
-          .sublist(0, splitedPath.indexWhere((element) => element == "Android"))
-          .join("/"));
-    }).toList();
-    storages = storagesTemp;
-
-    setState(() {});
-    if (kDebugMode) {
-      print(storagesTemp[0]);
-      print(storagesTemp[1]);
-      print('storage length : ${storagesTemp.length}');
-    }
-  }
-
   @override
   void initState() {
     super.initState();
     initFiles();
-    initDiskSpace();
-    getAllStorages();
   }
 
   @override
@@ -179,134 +98,7 @@ class _MyHomePageState extends State<MyHomePage> {
         return CupertinoTabView(
           builder: (BuildContext context) {
             return index == 2 // home
-                ? CupertinoPageScaffold(
-                    backgroundColor: CupertinoColors.secondarySystemBackground,
-                    child: CustomScrollView(
-                      slivers: [
-                        const CupertinoSliverNavigationBar(
-                          middle: Text('Browse'),
-                          largeTitle: Text('Browse'),
-                          alwaysShowMiddle: false,
-                          stretch: true,
-                          trailing: Icon(CupertinoIcons.ellipsis_circle),
-                        ),
-                        const SliverAppBar(
-                          pinned: true,
-                          systemOverlayStyle: SystemUiOverlayStyle(
-                              systemNavigationBarColor:
-                                  CupertinoColors.secondarySystemBackground),
-                          backgroundColor:
-                              CupertinoColors.secondarySystemBackground,
-                          title: CupertinoSearchTextField(
-                            placeholder: 'search',
-                          ),
-                        ),
-                        SliverFillRemaining(
-                          hasScrollBody: false,
-                          fillOverscroll: true,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              children: [
-                                const SizedBox(
-                                  height: 8,
-                                ),
-                                ExpandableWidget(
-                                  header: 'Locations',
-                                  content: CupertinoListSection.insetGrouped(
-                                    children: [
-                                      ...List.generate(storages.length,
-                                          (index) {
-                                        print(
-                                            'ontap: ${storages[index].path.toString()}');
-                                        String locValue =
-                                            storages[index].toString();
-                                        print('locvalue: $locValue');
-                                        var key = _directorySpace.keys
-                                            .elementAt(index);
-                                        var value =
-                                            _directorySpace[key]! / (1024);
-                                        var key2 = _directorySpace2.keys
-                                            .elementAt(index);
-                                        var value2 =
-                                            _directorySpace2[key2]! / (1024);
-                                        double usagePercent =
-                                            (value2 - value) / value2 * 100;
-                                        double usagePercent2 =
-                                            (value2 - value) / value2 * 100;
-                                        print(value2);
-                                        return listTile(
-                                            locValue.contains('emulated')
-                                                ? 'On My iPhone'
-                                                : locValue
-                                                    .split("storage/")[1]
-                                                    .split("/")[0]
-                                                    .trim(),
-                                            locValue.contains('emulated')
-                                                ? CupertinoIcons
-                                                    .device_phone_portrait
-                                                : CupertinoIcons.tray,
-                                            Row(
-                                              children: [
-                                                Text(locValue
-                                                        .contains('emulated')
-                                                    ? usagePercent > 1
-                                                        ? '${usagePercent.toStringAsFixed(1)} %'
-                                                        : ''
-                                                    : usagePercent2 > 1
-                                                        ? '${usagePercent2.toStringAsFixed(1)} %'
-                                                        : ''),
-                                                const Icon(CupertinoIcons
-                                                    .chevron_forward),
-                                              ],
-                                            ), () {
-                                          Navigator.push(
-                                            context,
-                                            CupertinoPageRoute(
-                                                builder: (context) => locValue
-                                                        .contains('emulated')
-                                                    ? const DocumentScreen(
-                                                        title: 'On My iPhone',
-                                                      )
-                                                    : DocumentScreen2(
-                                                        entity: storages[index]
-                                                            .path
-                                                            .toString(),
-                                                      )),
-                                          );
-                                        });
-                                      }),
-                                      listTile(
-                                          'Recently Deleted',
-                                          CupertinoIcons.trash,
-                                          const Icon(
-                                              CupertinoIcons.chevron_forward),
-                                          () {}),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(
-                                  height: 20,
-                                ),
-                                ExpandableWidget(
-                                  header: 'Favourites',
-                                  content: CupertinoListSection.insetGrouped(
-                                    children: [
-                                      listTile(
-                                          'downloads',
-                                          CupertinoIcons.folder,
-                                          const Icon(
-                                              CupertinoIcons.chevron_forward),
-                                          () {}),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ))
+                ? const Browse()
                 : index == 0 // Recents
                     ? CupertinoPageScaffold(
                         backgroundColor:
@@ -335,24 +127,101 @@ class _MyHomePageState extends State<MyHomePage> {
                                 placeholder: 'search',
                               ),
                             ),
-                            SliverGrid(
-                                delegate: SliverChildBuilderDelegate(
-                                  (BuildContext context, int index) {
-                                    return Container(
-                                      alignment: Alignment.center,
-                                      color: Colors.teal[100 * (index % 9)],
-                                      child: Text('grid item $index'),
-                                    );
-                                  },
-                                  childCount: 40,
-                                ),
+                            SliverGrid.builder(
                                 gridDelegate:
                                     const SliverGridDelegateWithMaxCrossAxisExtent(
                                   maxCrossAxisExtent: 200.0,
                                   mainAxisSpacing: 10.0,
                                   crossAxisSpacing: 10.0,
                                   childAspectRatio: 4.0,
-                                ))
+                                ),
+                                itemBuilder: (context, index) {
+                                  File file = _files! as File;
+                                  if (kDebugMode) {
+                                    print(file.path.split('/').last);
+                                  }
+                                  if (kDebugMode) {
+                                    print(
+                                        'Last modified: ${file.lastModifiedSync()}');
+                                  }
+                                  return Card(
+                                    child: Column(
+                                      children: [
+                                        const Icon(CupertinoIcons.folder_fill),
+                                        Text(file.path.split('/').last),
+                                        Text(
+                                            'Last modified: ${formatDate(file.lastModifiedSync())} '),
+                                      ],
+                                    ),
+                                  );
+                                }
+                                // FutureBuilder(
+                                //   future: _files,
+                                //   builder: (BuildContext context,
+                                //       AsyncSnapshot<dynamic> snapshot) {
+                                //
+                                //     return SliverGrid.builder(
+                                //         gridDelegate:
+                                //             const SliverGridDelegateWithMaxCrossAxisExtent(
+                                //           maxCrossAxisExtent: 200.0,
+                                //           mainAxisSpacing: 10.0,
+                                //           crossAxisSpacing: 10.0,
+                                //           childAspectRatio: 4.0,
+                                //         ),
+                                //         itemBuilder: (context, index) {
+                                //           File file = snapshot.data![index];
+                                //           if (kDebugMode) {
+                                //             print(file.path.split('/').last);
+                                //           }
+                                //           if (kDebugMode) {
+                                //             print(
+                                //                 'Last modified: ${file.lastModifiedSync()}');
+                                //           }
+                                //           return Card(
+                                //             child: Column(
+                                //               children: [
+                                //                 const Icon(
+                                //                     CupertinoIcons.folder_fill),
+                                //                 Text(file.path.split('/').last),
+                                //                 Text(
+                                //                     'Last modified: ${formatDate(file.lastModifiedSync())} '),
+                                //               ],
+                                //             ),
+                                //           );
+                                //         });
+                                // return SliverGrid(
+                                //     delegate: SliverChildBuilderDelegate(
+                                //       (BuildContext context, int index) {
+                                //         return Card(
+                                //           child: Column(
+                                //             children: [
+                                //               const Icon(CupertinoIcons
+                                //                   .folder_fill),
+                                //               Text(file.path
+                                //                   .split('/')
+                                //                   .last),
+                                //               Text(
+                                //                   'Last modified: ${formatDate(file.lastModifiedSync())} '),
+                                //             ],
+                                //           ),
+                                //         );
+                                //         // return Container(
+                                //         //   alignment: Alignment.center,
+                                //         //   color: Colors.teal[100 * (index % 9)],
+                                //         //   child: Text('grid item $index'),
+                                //         // );
+                                //       },
+                                //       childCount: snapshot.data!.length,
+                                //     ),
+                                //     gridDelegate:
+                                //         const SliverGridDelegateWithMaxCrossAxisExtent(
+                                //       maxCrossAxisExtent: 200.0,
+                                //       mainAxisSpacing: 10.0,
+                                //       crossAxisSpacing: 10.0,
+                                //       childAspectRatio: 4.0,
+                                //     ));
+
+                                ),
                           ],
                         ))
                     : index == 1 //shared
@@ -381,7 +250,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                           print(
                                               'Last modified: ${file.lastModifiedSync()}');
                                         }
-                                        getFileDetails(file.path.toString());
+
                                         return ListTile(
                                           title:
                                               Text(file.path.split('/').last),
@@ -411,15 +280,5 @@ class _MyHomePageState extends State<MyHomePage> {
 
   String _addLeadingZero(int number) {
     return number.toString().padLeft(2, '0');
-  }
-
-  Widget listTile(
-      String title, IconData leading, Widget trailing, Function() click) {
-    return CupertinoListTile(
-      onTap: click,
-      title: Text(title),
-      leading: Icon(leading),
-      trailing: trailing,
-    );
   }
 }
