@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import '/common/common.dart';
 import 'screens/home_page.dart';
+import 'screens/sdcard.dart';
 
 void main() {
   runApp(const MyApp());
@@ -19,10 +20,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const CupertinoApp(
+    return CupertinoApp(
       title: appName,
       theme: CupertinoThemeData(brightness: Brightness.light),
-      // home: MyApp1(),
+      // home: HomePage(),
       home: MyHomePage(title: appName),
       debugShowCheckedModeBanner: false,
       localizationsDelegates: [

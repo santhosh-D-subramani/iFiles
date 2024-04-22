@@ -1,15 +1,17 @@
 import 'dart:io';
 
 import 'package:disk_space/disk_space.dart';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:path_provider_ex2/path_provider_ex2.dart';
 import 'package:permission_handler/permission_handler.dart';
+
 import '../widgets/expandable_widget.dart';
 import 'documents_screen.dart';
+import 'folder.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -136,9 +138,11 @@ class _MyHomePageState extends State<MyHomePage> {
           .join("/"));
     }).toList();
     storages = storagesTemp;
+
     setState(() {});
     if (kDebugMode) {
       print(storagesTemp[0]);
+      print(storagesTemp[1]);
       print('storage length : ${storagesTemp.length}');
     }
   }
@@ -153,9 +157,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // double usagePercent =
-    //    (_totalDiskSpace - _diskSpace) / _totalDiskSpace * 100;
-
     return CupertinoTabScaffold(
       tabBar: CupertinoTabBar(
         height: 60,
@@ -216,8 +217,11 @@ class _MyHomePageState extends State<MyHomePage> {
                                     children: [
                                       ...List.generate(storages.length,
                                           (index) {
+                                        print(
+                                            'ontap: ${storages[index].path.toString()}');
                                         String locValue =
                                             storages[index].toString();
+                                        print('locvalue: $locValue');
                                         var key = _directorySpace.keys
                                             .elementAt(index);
                                         var value =
@@ -259,10 +263,16 @@ class _MyHomePageState extends State<MyHomePage> {
                                           Navigator.push(
                                             context,
                                             CupertinoPageRoute(
-                                                builder: (context) =>
-                                                    DocumentScreen(
-                                                      title: 'On My iPhone',
-                                                    )),
+                                                builder: (context) => locValue
+                                                        .contains('emulated')
+                                                    ? const DocumentScreen(
+                                                        title: 'On My iPhone',
+                                                      )
+                                                    : DocumentScreen2(
+                                                        entity: storages[index]
+                                                            .path
+                                                            .toString(),
+                                                      )),
                                           );
                                         });
                                       }),

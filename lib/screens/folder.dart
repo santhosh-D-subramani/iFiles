@@ -20,6 +20,7 @@ class _DocumentScreen2State extends State<DocumentScreen2> {
   void initState() {
     super.initState();
     controller.setCurrentPath = widget.entity;
+    print('current path : ${controller.getCurrentPath}');
   }
 
   @override
@@ -66,10 +67,6 @@ class _DocumentScreen2State extends State<DocumentScreen2> {
                   height: 8,
                 ),
                 CupertinoActivityIndicator(),
-                Text(
-                  'Loading...',
-                  style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                ),
               ],
             ),
           ),
@@ -101,6 +98,7 @@ class _DocumentScreen2State extends State<DocumentScreen2> {
           controller: controller,
           builder: (context, snapshot) {
             List<FileSystemEntity> entities = snapshot;
+
             controller.setCurrentPath = widget.entity;
 
             if (kDebugMode) {
