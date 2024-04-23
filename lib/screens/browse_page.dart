@@ -1,10 +1,12 @@
 import 'dart:io';
 
 import 'package:disk_space/disk_space.dart';
+import 'package:file_manager/file_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../widgets/custom_list_tile.dart';
@@ -21,6 +23,7 @@ class Browse extends StatefulWidget {
 
 class _BrowseState extends State<Browse> {
   List<Directory> storages = [];
+  final FileManagerController controller = FileManagerController();
 
   // double _diskSpace = 0;
   // double _totalDiskSpace = 0;
@@ -36,11 +39,11 @@ class _BrowseState extends State<Browse> {
           .join("/"));
     }).toList();
     storages = storagesTemp;
-
+    createTrashDirectory();
     setState(() {});
     if (kDebugMode) {
-      print(storagesTemp[0]);
-      print(storagesTemp[1]);
+      print('getAllStorage 1: ${storagesTemp[0]}');
+      print('getAllStorage 2:${storagesTemp[1]}');
       print('storage length : ${storagesTemp.length}');
     }
   }
@@ -100,18 +103,44 @@ class _BrowseState extends State<Browse> {
     getAllStorages();
   }
 
+  void createTrashDirectory() async {
+    var folderName = '.trash';
+    try {
+      // Create Folder
+      if (storages.isNotEmpty) {
+        controller.setCurrentPath = storages[0].path;
+        await FileManager.createFolder(controller.getCurrentPath, folderName);
+        print('trash folder created ${controller.getCurrentPath}/.trash');
+        // Open Created Folder
+        // controller.setCurrentPath = controller.getCurrentPath + "/" + folderName;
+      }
+    } catch (e) {
+      print('trash folder cant create /.trash $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
         backgroundColor: CupertinoColors.secondarySystemBackground,
         child: CustomScrollView(
           slivers: [
-            const CupertinoSliverNavigationBar(
-              middle: Text('Browse'),
-              largeTitle: Text('Browse'),
+            CupertinoSliverNavigationBar(
+              middle: const Text('Browse'),
+              largeTitle: const Text('Browse'),
               alwaysShowMiddle: false,
               stretch: true,
-              trailing: Icon(CupertinoIcons.ellipsis_circle),
+              trailing: PopupMenuButton(
+                  offset: const Offset(0, 20),
+                  padding: const EdgeInsets.all(8),
+                  position: PopupMenuPosition.under,
+                  icon: const Icon(
+                    CupertinoIcons.ellipsis_circle,
+                  ),
+                  itemBuilder: (context) => [
+                        PopupMenuItem(
+                            child: CupertinoListTile(title: Text('title')))
+                      ]),
             ),
             const SliverAppBar(
               pinned: true,
@@ -191,18 +220,20 @@ class _BrowseState extends State<Browse> {
                                                 title: 'On My iPhone',
                                               )
                                             : FolderScreen(
-                                                entity: storages[index]
-                                                    .path
-                                                    .toString(),
+                                                entity: storages[index].path,
                                               )),
                               );
                             });
                           }),
-                          listTile(
-                              'Recently Deleted',
-                              CupertinoIcons.trash,
-                              const Icon(CupertinoIcons.chevron_forward),
-                              () {}),
+                          listTile('Recently Deleted', CupertinoIcons.trash,
+                              const Icon(CupertinoIcons.chevron_forward), () {
+                            Navigator.push(
+                                context,
+                                CupertinoPageRoute(
+                                    builder: (context) => FolderScreen(
+                                          entity: '${storages[0].path}/.trash',
+                                        )));
+                          }),
                         ],
                       ),
                     ),
@@ -213,11 +244,26 @@ class _BrowseState extends State<Browse> {
                       header: 'Favourites',
                       content: CupertinoListSection.insetGrouped(
                         children: [
-                          listTile(
-                              'downloads',
-                              CupertinoIcons.folder,
-                              const Icon(CupertinoIcons.chevron_forward),
-                              () {}),
+                          listTile('iPhone downloads', CupertinoIcons.folder,
+                              const Icon(CupertinoIcons.chevron_forward), () {
+                            Navigator.push(
+                                context,
+                                CupertinoPageRoute(
+                                    builder: (context) => FolderScreen(
+                                          entity:
+                                              '${storages[0].path}/Download',
+                                        )));
+                          }),
+                          listTile('SD Card downloads', CupertinoIcons.folder,
+                              const Icon(CupertinoIcons.chevron_forward), () {
+                            Navigator.push(
+                                context,
+                                CupertinoPageRoute(
+                                    builder: (context) => FolderScreen(
+                                          entity:
+                                              '${storages[1].path}/Download',
+                                        )));
+                          }),
                         ],
                       ),
                     ),

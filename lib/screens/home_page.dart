@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '/screens/browse_page.dart';
 import '/screens/recents_page.dart';
 
@@ -12,6 +13,19 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  void requestStoragePermission() async {
+    var status = await Permission.manageExternalStorage.isGranted;
+    if (!status) {
+      await Permission.manageExternalStorage.request();
+    }
+  }
+
+  @override
+  void initState() {
+    requestStoragePermission();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return CupertinoTabScaffold(
