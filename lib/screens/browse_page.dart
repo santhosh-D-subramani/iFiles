@@ -5,14 +5,13 @@ import 'package:file_manager/file_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../widgets/custom_list_tile.dart';
 import '../widgets/expandable_widget.dart';
 import 'documents_screen.dart';
 import 'folder.dart';
+import 'package:custom_pop_up_menu_fork/custom_pop_up_menu.dart';
 
 class Browse extends StatefulWidget {
   const Browse({super.key});
@@ -24,6 +23,7 @@ class Browse extends StatefulWidget {
 class _BrowseState extends State<Browse> {
   List<Directory> storages = [];
   final FileManagerController controller = FileManagerController();
+  final CustomPopupMenuController _controller = CustomPopupMenuController();
 
   // double _diskSpace = 0;
   // double _totalDiskSpace = 0;
@@ -119,6 +119,8 @@ class _BrowseState extends State<Browse> {
     }
   }
 
+  void createFolder(String path) {}
+
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
@@ -130,23 +132,54 @@ class _BrowseState extends State<Browse> {
               largeTitle: const Text('Browse'),
               alwaysShowMiddle: false,
               stretch: true,
-              trailing: PopupMenuButton(
-                  offset: const Offset(0, 20),
-                  padding: const EdgeInsets.all(8),
-                  position: PopupMenuPosition.under,
-                  icon: const Icon(
-                    CupertinoIcons.ellipsis_circle,
+              trailing: CustomPopupMenu(
+                controller: _controller,
+                menuBuilder: () => ClipRRect(
+                  borderRadius: BorderRadius.circular(15),
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width / 1.4,
+                    child: CupertinoListSection(
+                      topMargin: 0,
+                      children: [
+                        CupertinoListTile(
+                          onTap: () {
+                            print('object');
+                            _controller.hideMenu();
+                          },
+                          title: const Text('Scan Documents'),
+                          trailing:
+                              const Icon(CupertinoIcons.doc_text_viewfinder),
+                        ),
+                        CupertinoListTile(
+                          onTap: () {
+                            _controller.hideMenu();
+                          },
+                          title: const Text('Connect to Server'),
+                          trailing: const Icon(
+                              CupertinoIcons.slider_horizontal_below_rectangle),
+                        ),
+                        CupertinoListTile(
+                            onTap: () {
+                              _controller.hideMenu();
+                            },
+                            title: const Text('Edit')),
+                      ],
+                    ),
                   ),
-                  itemBuilder: (context) => [
-                        PopupMenuItem(
-                            child: CupertinoListTile(title: Text('title')))
-                      ]),
+                ),
+                pressType: PressType.singleClick,
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  child: const Icon(CupertinoIcons.ellipsis_circle,
+                      color: Colors.blue),
+                ),
+              ),
             ),
             const SliverAppBar(
               pinned: true,
-              systemOverlayStyle: SystemUiOverlayStyle(
-                  systemNavigationBarColor:
-                      CupertinoColors.secondarySystemBackground),
+              // systemOverlayStyle: SystemUiOverlayStyle(
+              //     systemNavigationBarColor:
+              //         CupertinoColors.secondarySystemBackground),
               backgroundColor: CupertinoColors.secondarySystemBackground,
               title: CupertinoSearchTextField(
                 placeholder: 'search',

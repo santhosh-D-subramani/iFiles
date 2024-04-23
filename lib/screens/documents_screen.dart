@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:file_manager/file_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:xfiles/widgets/error_screen.dart';
 import 'package:xfiles/widgets/loading_screen.dart';
 
@@ -46,6 +47,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.secondarySystemBackground,
       navigationBar: CupertinoNavigationBar(
         middle: ValueListenableBuilder(
             valueListenable: controller.titleNotifier,
@@ -54,55 +56,68 @@ class _DocumentScreenState extends State<DocumentScreen> {
             }),
       ),
       child: SafeArea(
-        child: FileManager(
-          emptyFolder: emptyFolderScreen(),
-          loadingScreen: loadingScreen(),
-          errorBuilder: (context, error) => errorScreen(error),
-          hideHiddenEntity: false,
-          controller: controller,
-          builder: (context, snapshot) {
-            List<FileSystemEntity> entities = snapshot;
+        child: CustomScrollView(
+          slivers: [
+            SliverFillRemaining(
+              fillOverscroll: true,
+              hasScrollBody: true,
+              child: FileManager(
+                emptyFolder: emptyFolderScreen(),
+                loadingScreen: loadingScreen(),
+                errorBuilder: (context, error) => errorScreen(error),
+                hideHiddenEntity: false,
+                controller: controller,
+                builder: (context, snapshot) {
+                  List<FileSystemEntity> entities = snapshot;
 
-            return CupertinoListSection.insetGrouped(
-              header: const Text(''),
-              children: [
-                ...List.generate(entities.length, (index) {
-                  if (!(FileManager.isDirectory(entities[index]))) {
-                    if (kDebugMode) {
-                      print('file size ${getFileSize(entities[index].path)}');
-                    }
-                  }
-                  return CupertinoListTile(
-                    leading: FileManager.isFile(entities[index])
-                        ? const Icon(CupertinoIcons.doc_fill)
-                        : const Icon(CupertinoIcons.folder_fill),
-                    trailing: FileManager.isDirectory(entities[index])
-                        ? const Icon(CupertinoIcons.chevron_forward)
-                        : Text(getFileSize(entities[index].path)),
-                    onTap: () {
-                      if (FileManager.isDirectory(entities[index])) {
-                        Navigator.push(
-                          context,
-                          CupertinoPageRoute(
-                              builder: (context) => FolderScreen(
-                                    entity: entities[index].path,
-                                  )),
-                        );
-
-                        if (kDebugMode) {
-                          print(
-                              'current path document: ${controller.getCurrentPath}');
+                  return CupertinoListSection.insetGrouped(
+                    header: const Text(''),
+                    footer: Center(child: Text('${entities.length + 1} items')),
+                    children: [
+                      ...List.generate(entities.length, (index) {
+                        if (!(FileManager.isDirectory(entities[index]))) {
+                          if (kDebugMode) {
+                            print(
+                                'file size ${getFileSize(entities[index].path)}');
+                          }
                         }
-                      } else {
-                        // Perform file-related tasks.
-                      }
-                    },
-                    title: Text(FileManager.basename(entities[index])),
+                        return CupertinoListTile(
+                          leading: FileManager.isFile(entities[index])
+                              ? const Icon(CupertinoIcons.doc_fill)
+                              : const Icon(CupertinoIcons.folder_fill),
+                          trailing: FileManager.isDirectory(entities[index])
+                              ? const Icon(CupertinoIcons.chevron_forward)
+                              : Text(getFileSize(entities[index].path)),
+                          onTap: () {
+                            if (FileManager.isDirectory(entities[index])) {
+                              Navigator.push(
+                                context,
+                                CupertinoPageRoute(
+                                    builder: (context) => FolderScreen(
+                                          entity: entities[index].path,
+                                        )),
+                              );
+
+                              if (kDebugMode) {
+                                print(
+                                    'current path document: ${controller.getCurrentPath}');
+                              }
+                            } else {
+                              // Perform file-related tasks.
+                            }
+                          },
+                          title: Text(FileManager.basename(entities[index])),
+                        );
+                      }),
+                    ],
                   );
-                }),
-              ],
-            );
-          },
+                },
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Text(''),
+            ),
+          ],
         ),
       ),
     );
