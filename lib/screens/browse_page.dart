@@ -119,6 +119,12 @@ class _BrowseState extends State<Browse> {
     }
   }
 
+  Future<void> moveToTrash(String path, String fileName) async {
+    final trashDir = Directory('${storages[0].path}/.trash');
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final newPath = '$trashDir/${timestamp}_$fileName';
+  }
+
   void createFolder(String path) {}
 
   @override

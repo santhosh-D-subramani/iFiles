@@ -37,6 +37,52 @@ class _DocumentScreenState extends State<DocumentScreen> {
   final FileManagerController controller = FileManagerController();
   final CustomPopupMenuController _controller = CustomPopupMenuController();
 
+  createFolder(BuildContext context) async {
+    showDialog(
+      context: context,
+      builder: (context) {
+        TextEditingController folderName = TextEditingController();
+        return CupertinoAlertDialog(
+          title: const Text('New Folder'),
+          content: CupertinoListTile(
+              title: CupertinoTextField(
+            controller: folderName,
+          )),
+          actions: [
+            CupertinoDialogAction(
+              isDefaultAction: true,
+              onPressed: () async {
+                try {
+                  // Create Folder
+                  if (folderName.text.isNotEmpty) {
+                    await FileManager.createFolder(
+                        controller.getCurrentPath, folderName.text);
+                    // Open Created Folder
+                    controller.setCurrentPath =
+                        "${controller.getCurrentPath}/${folderName.text}";
+                  }
+                } catch (e) {
+                  if (kDebugMode) {
+                    print('error creating folder: $e');
+                  }
+                }
+
+                if (context.mounted) {
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Create'),
+            ),
+            CupertinoDialogAction(
+                isDestructiveAction: true,
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel')),
+          ],
+        );
+      },
+    );
+  }
+
   String getFileSize(String path) {
     File file = File(path);
     int fileSizeInBytes = file.lengthSync();
@@ -95,6 +141,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
                   ),
                   CupertinoListTile(
                     onTap: () {
+                      createFolder(context);
                       _controller.hideMenu();
                     },
                     title: const Text('New Folder'),
@@ -170,7 +217,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
           slivers: [
             SliverFillRemaining(
               fillOverscroll: true,
-              hasScrollBody: true,
+              hasScrollBody: false,
               child: FileManager(
                 emptyFolder: emptyFolderScreen(),
                 loadingScreen: loadingScreen(),
@@ -191,6 +238,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
                                 'file size ${getFileSize(entities[index].path)}');
                           }
                         }
+
                         return CupertinoListTile(
                           leading: FileManager.isFile(entities[index])
                               ? const Icon(CupertinoIcons.doc_fill)
@@ -223,9 +271,6 @@ class _DocumentScreenState extends State<DocumentScreen> {
                   );
                 },
               ),
-            ),
-            const SliverToBoxAdapter(
-              child: Text(''),
             ),
           ],
         ),

@@ -15,7 +15,7 @@ class _ExpandableWidgetState extends State<ExpandableWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-  bool _expanded = false;
+  bool _expanded = true;
 
   @override
   void initState() {
@@ -25,6 +25,7 @@ class _ExpandableWidgetState extends State<ExpandableWidget>
       duration: const Duration(milliseconds: 300),
     );
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    _controller.forward();
   }
 
   @override
@@ -58,12 +59,12 @@ class _ExpandableWidgetState extends State<ExpandableWidget>
               children: [
                 Expanded(
                     child: Text(
-                      widget.header,
-                      style: const TextStyle(
-                          fontSize: 22,
-                          letterSpacing: 1,
-                          fontWeight: FontWeight.bold),
-                    )),
+                  widget.header,
+                  style: const TextStyle(
+                      fontSize: 22,
+                      letterSpacing: 1,
+                      fontWeight: FontWeight.bold),
+                )),
                 RotationTransition(
                   turns: Tween(begin: 0.0, end: 0.25).animate(_animation),
                   child: const Icon(
