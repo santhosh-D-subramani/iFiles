@@ -9,6 +9,8 @@ import 'package:xfiles/widgets/empty_folder_screen.dart';
 import 'package:xfiles/widgets/error_screen.dart';
 import 'package:xfiles/widgets/loading_screen.dart';
 
+import '../common/common.dart';
+
 class FolderScreen extends StatefulWidget {
   const FolderScreen({super.key, required this.entity});
 
@@ -21,66 +23,6 @@ class FolderScreen extends StatefulWidget {
 class _FolderScreenState extends State<FolderScreen> {
   final FileManagerController controller = FileManagerController();
   final CustomPopupMenuController _controller = CustomPopupMenuController();
-
-  String getFileSize(String path) {
-    File file = File(path);
-    int fileSizeInBytes = file.lengthSync();
-    double fileSizeInKB = fileSizeInBytes / 1024; // Convert bytes to kilobytes
-    double fileSizeInMB = fileSizeInKB / 1024;
-    double fileSizeInGB = fileSizeInMB / 1024;
-    return fileSizeInKB < 1
-        ? '${fileSizeInBytes.toStringAsFixed(1)} B'
-        : fileSizeInMB < 1
-            ? '${fileSizeInKB.toStringAsFixed(1)} Kb'
-            : fileSizeInGB < 1
-                ? '${fileSizeInMB.toStringAsFixed(1)} Mb'
-                : fileSizeInGB > 1
-                    ? '${fileSizeInGB.toStringAsFixed(1)} Gb'
-                    : '';
-  }
-
-  createFolder(BuildContext context) async {
-    showDialog(
-      context: context,
-      builder: (context) {
-        TextEditingController folderName = TextEditingController();
-        return Dialog(
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  title: TextField(
-                    controller: folderName,
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    try {
-                      // Create Folder
-                      await FileManager.createFolder(
-                          controller.getCurrentPath, folderName.text);
-                      // Open Created Folder
-                      controller.setCurrentPath =
-                          "${controller.getCurrentPath}/${folderName.text}";
-                    } catch (e) {
-                      print('error creating folder: $e');
-                    }
-
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: const Text('Create Folder'),
-                )
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   @override
   void initState() {
@@ -121,7 +63,7 @@ class _FolderScreenState extends State<FolderScreen> {
                   ),
                   CupertinoListTile(
                     onTap: () {
-                      createFolder(context);
+                      createFolder(context, controller);
                       _controller.hideMenu();
                     },
                     title: const Text('New Folder'),

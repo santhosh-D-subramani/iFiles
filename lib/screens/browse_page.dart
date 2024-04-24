@@ -149,7 +149,6 @@ class _BrowseState extends State<Browse> {
                       children: [
                         CupertinoListTile(
                           onTap: () {
-                            print('object');
                             _controller.hideMenu();
                           },
                           title: const Text('Scan Documents'),
@@ -174,11 +173,8 @@ class _BrowseState extends State<Browse> {
                   ),
                 ),
                 pressType: PressType.singleClick,
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  child: const Icon(CupertinoIcons.ellipsis_circle,
-                      color: Colors.blue),
-                ),
+                child: const Icon(CupertinoIcons.ellipsis_circle,
+                    color: Colors.blue),
               ),
             ),
             const SliverAppBar(
