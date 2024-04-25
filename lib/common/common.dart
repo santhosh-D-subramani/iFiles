@@ -93,3 +93,16 @@ Future<dynamic> dateFetcher(var entity) async {
           ? 'Yesterday'
           : formattedDate;
 }
+
+final DecorationTween tween = DecorationTween(
+  begin: BoxDecoration(
+    color: CupertinoColors.white,
+    boxShadow: const <BoxShadow>[],
+    borderRadius: BorderRadius.circular(20.0),
+  ),
+  end: BoxDecoration(
+    color: CupertinoColors.white,
+    boxShadow: CupertinoContextMenu.kEndBoxShadow,
+    borderRadius: BorderRadius.circular(20.0),
+  ),
+);

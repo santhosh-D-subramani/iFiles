@@ -55,10 +55,21 @@ class _DocumentScreenState extends State<DocumentScreen> {
     });
   }
 
+  Animation<Decoration> _boxDecorationAnimation(Animation<double> animation) {
+    return tween.animate(
+      CurvedAnimation(
+        parent: animation,
+        curve: Interval(
+          0.0,
+          CupertinoContextMenu.animationOpensAt,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-      backgroundColor: CupertinoColors.secondarySystemBackground,
       navigationBar: CupertinoNavigationBar(
         middle: ValueListenableBuilder(
             valueListenable: controller.titleNotifier,
@@ -181,104 +192,174 @@ class _DocumentScreenState extends State<DocumentScreen> {
                 builder: (context, snapshot) {
                   List<FileSystemEntity> entities = snapshot;
 
-                  return CupertinoListSection.insetGrouped(
-                    header: const Text(''),
+                  return CupertinoListSection(
+                    backgroundColor: CupertinoColors.white,
+                    // header: const Text(''),
                     footer: Center(child: Text('${entities.length} items')),
                     children: [
                       ...List.generate(entities.length, (index) {
                         FileSystemEntity entity = entities[index];
-
-                        return Slidable(
-                            key: UniqueKey(),
-                            endActionPane: ActionPane(
-                              motion: const StretchMotion(),
-                              dismissible: DismissiblePane(
-                                onDismissed: () async {
-                                  FileManager.isDirectory(entity)
-                                      ? await entity.delete(recursive: true)
-                                      : await entity.delete();
-                                  if (await entity.exists()) {
-                                  } else {
-                                    setState(() {});
-                                  }
+                        return CupertinoContextMenu.builder(
+                            enableHapticFeedback: true,
+                            actions: <Widget>[
+                              CupertinoContextMenuAction(
+                                onPressed: () {},
+                                isDefaultAction: true,
+                                trailingIcon:
+                                    CupertinoIcons.doc_on_clipboard_fill,
+                                child: const Text('Copy'),
+                              ),
+                              CupertinoContextMenuAction(
+                                onPressed: () {
+                                  Navigator.pop(context);
                                 },
+                                trailingIcon: CupertinoIcons.share,
+                                child: const Text('Share'),
                               ),
-                              children: [
-                                SlidableAction(
-                                  onPressed: (value) async {
-                                    FileManager.isDirectory(entity)
-                                        ? await entity.delete(recursive: true)
-                                        : await entity.delete();
-                                    if (await entity.exists()) {
-                                    } else {
-                                      setState(() {});
-                                    }
-                                  },
-                                  label: 'Delete',
-                                  backgroundColor:
-                                      CupertinoColors.destructiveRed,
-                                ),
-                              ],
-                            ),
-                            child: CupertinoListTile(
-                              subtitle: FutureBuilder(
-                                  future: dateFetcher(entity),
-                                  builder: (context, snapshot) {
-                                    if (snapshot.hasData) {
-                                      return Text(snapshot.data.toString());
-                                    } else {
-                                      return Center(
-                                        child: Text(
-                                          '${snapshot.error} occurred',
+                              CupertinoContextMenuAction(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                trailingIcon: CupertinoIcons.heart,
+                                child: const Text('Favorite'),
+                              ),
+                              CupertinoContextMenuAction(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                isDestructiveAction: true,
+                                trailingIcon: CupertinoIcons.delete,
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                            builder: (BuildContext context,
+                                Animation<double> animation) {
+                              final Animation<Decoration>
+                                  boxDecorationAnimation =
+                                  _boxDecorationAnimation(animation);
+                              return Wrap(
+                                children: [
+                                  Container(
+                                    decoration: animation.value <
+                                            CupertinoContextMenu
+                                                .animationOpensAt
+                                        ? boxDecorationAnimation.value
+                                        : null,
+                                    child: Slidable(
+                                      key: UniqueKey(),
+                                      endActionPane: ActionPane(
+                                        motion: const StretchMotion(),
+                                        dismissible: DismissiblePane(
+                                          onDismissed: () async {
+                                            FileManager.isDirectory(entity)
+                                                ? await entity.delete(
+                                                    recursive: true)
+                                                : await entity.delete();
+                                            if (await entity.exists()) {
+                                            } else {
+                                              setState(() {});
+                                            }
+                                          },
                                         ),
-                                      );
-                                    }
-                                  }),
-                              leading: FileManager.isFile(entities[index])
-                                  ? const Icon(CupertinoIcons.doc_fill)
-                                  : const Icon(CupertinoIcons.folder_fill),
-                              trailing: FileManager.isDirectory(entities[index])
-                                  ? const Icon(CupertinoIcons.chevron_forward)
-                                  : Text(getFileSize(entities[index].path)),
-                              onTap: () {
-                                if (FileManager.isDirectory(entities[index])) {
-                                  Navigator.push(
-                                    context,
-                                    CupertinoPageRoute(
-                                        builder: (context) => FolderScreen(
-                                              entity: entities[index].path,
-                                            )),
-                                  );
+                                        children: [
+                                          SlidableAction(
+                                            onPressed: (value) async {
+                                              FileManager.isDirectory(entity)
+                                                  ? await entity.delete(
+                                                      recursive: true)
+                                                  : await entity.delete();
+                                              if (await entity.exists()) {
+                                              } else {
+                                                setState(() {});
+                                              }
+                                            },
+                                            label: 'Delete',
+                                            backgroundColor:
+                                                CupertinoColors.destructiveRed,
+                                          ),
+                                        ],
+                                      ),
+                                      child: CupertinoListTile(
+                                        padding: const EdgeInsets.all(8),
+                                        backgroundColor: CupertinoColors.white,
+                                        subtitle: FutureBuilder(
+                                            future: dateFetcher(entity),
+                                            builder: (context, snapshot) {
+                                              if (snapshot.hasData) {
+                                                return Text(
+                                                    snapshot.data.toString());
+                                              } else {
+                                                return Center(
+                                                  child: Text(
+                                                    '${snapshot.error} occurred',
+                                                  ),
+                                                );
+                                              }
+                                            }),
+                                        leading:
+                                            FileManager.isFile(entities[index])
+                                                ? const Icon(
+                                                    CupertinoIcons.doc_fill,
+                                                    size: 30,
+                                                  )
+                                                : const Icon(
+                                                    CupertinoIcons.folder_fill,
+                                                    size: 30,
+                                                  ),
+                                        trailing: FileManager.isDirectory(
+                                                entities[index])
+                                            ? const Icon(
+                                                CupertinoIcons.chevron_forward)
+                                            : Text(getFileSize(
+                                                entities[index].path)),
+                                        onTap: () {
+                                          if (FileManager.isDirectory(
+                                              entities[index])) {
+                                            Navigator.push(
+                                              context,
+                                              CupertinoPageRoute(
+                                                  builder: (context) =>
+                                                      FolderScreen(
+                                                        entity: entities[index]
+                                                            .path,
+                                                      )),
+                                            );
 
-                                  if (kDebugMode) {
-                                    print(
-                                        'current path document: ${controller.getCurrentPath}');
-                                  }
-                                } else {
-                                  // Perform file-related tasks.
-                                  try {
-                                    String filePath =
-                                        '${controller.getCurrentPath}/${FileManager.basename(entities[index])}';
-                                    OpenFile.open(filePath);
-                                  } on Exception catch (e) {
-                                    if (kDebugMode) {
-                                      print('file open error : $e');
-                                    }
-                                  }
-                                }
-                              },
-                              title: Text(
-                                FileManager.isDirectory(entity)
-                                    ? FileManager.basename(entity)
-                                    : _boolValue
-                                        ? entity.path
-                                            .split('/')
-                                            .last
-                                            .split('.')
-                                            .first
-                                        : FileManager.basename(entity),
-                              ),
-                            ));
+                                            if (kDebugMode) {
+                                              print(
+                                                  'current path document: ${controller.getCurrentPath}');
+                                            }
+                                          } else {
+                                            // Perform file-related tasks.
+                                            try {
+                                              String filePath =
+                                                  '${controller.getCurrentPath}/${FileManager.basename(entities[index])}';
+                                              OpenFile.open(filePath);
+                                            } on Exception catch (e) {
+                                              if (kDebugMode) {
+                                                print('file open error : $e');
+                                              }
+                                            }
+                                          }
+                                        },
+                                        title: Text(
+                                          FileManager.isDirectory(entity)
+                                              ? FileManager.basename(entity)
+                                              : _boolValue
+                                                  ? entity.path
+                                                      .split('/')
+                                                      .last
+                                                      .split('.')
+                                                      .first
+                                                  : FileManager.basename(
+                                                      entity),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            });
                       }),
                     ],
                   );
