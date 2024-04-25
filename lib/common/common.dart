@@ -4,6 +4,7 @@ import 'package:file_manager/file_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 const appName = 'iFiles';
@@ -78,4 +79,17 @@ Future<dynamic> show(BuildContext context, Widget builder, bool expand) {
     backgroundColor: CupertinoColors.secondarySystemBackground,
     builder: (context) => builder,
   );
+}
+
+Future<dynamic> dateFetcher(var entity) async {
+  DateTime date = (await entity.stat()).modified;
+  DateTime now = DateTime.now();
+  var i = now.day.compareTo(date.day);
+  String formattedDate = DateFormat('dd/MM/yy').format(date);
+
+  return i == 0
+      ? DateFormat('h:mm a').format(date)
+      : i == 1
+          ? 'Yesterday'
+          : formattedDate;
 }

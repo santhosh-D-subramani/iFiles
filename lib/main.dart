@@ -1,17 +1,16 @@
-import 'dart:io';
-
-import 'package:disk_space/disk_space.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import 'package:path_provider/path_provider.dart';
+
 import '/common/common.dart';
 import 'screens/home_page.dart';
 import 'screens/support_screens/modal_fit.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    const MyApp(),
+  );
   SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(statusBarColor: Colors.transparent));
 }
@@ -24,10 +23,8 @@ class MyApp extends StatelessWidget {
     return CupertinoApp(
       title: appName,
       theme: const CupertinoThemeData(brightness: Brightness.light),
-      // home: HomePage(),
-      // home: MyHomePage(title: appName),
       debugShowCheckedModeBanner: false,
-      localizationsDelegates: [
+      localizationsDelegates: const [
         DefaultMaterialLocalizations.delegate,
         DefaultCupertinoLocalizations.delegate,
         DefaultWidgetsLocalizations.delegate,

@@ -210,6 +210,7 @@ class _BrowseState extends State<Browse> {
                             if (kDebugMode) {
                               print('locValue: $locValue');
                             }
+
                             var key = _directorySpace.keys.elementAt(index);
                             var value = _directorySpace[key]! / (1024);
                             var key2 = _directorySpace2.keys.elementAt(index);
@@ -218,9 +219,7 @@ class _BrowseState extends State<Browse> {
                                 (value2 - value) / value2 * 100;
                             double usagePercent2 =
                                 (value2 - value) / value2 * 100;
-                            if (kDebugMode) {
-                              print(value2);
-                            }
+
                             return listTile(
                                 locValue.contains('emulated')
                                     ? 'On My iPhone'
