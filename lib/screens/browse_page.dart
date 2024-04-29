@@ -5,13 +5,20 @@ import 'package:file_manager/file_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:xfiles/common/common.dart';
+import 'package:xfiles/screens/support_screens/connect_ftp_page.dart';
+import 'package:xfiles/screens/support_screens/modal_fit.dart';
+import 'package:xfiles/screens/support_screens/settings_page.dart';
 
 import '../widgets/custom_list_tile.dart';
 import '../widgets/expandable_widget.dart';
 import 'documents_screen.dart';
 import 'folder.dart';
 import 'package:custom_pop_up_menu_fork/custom_pop_up_menu.dart';
+
+import 'support_screens/about_page.dart';
 
 class Browse extends StatefulWidget {
   const Browse({super.key});
@@ -130,12 +137,13 @@ class _BrowseState extends State<Browse> {
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
+        resizeToAvoidBottomInset: true,
         backgroundColor: CupertinoColors.secondarySystemBackground,
         child: CustomScrollView(
           slivers: [
             CupertinoSliverNavigationBar(
-              middle: const Text('Browse'),
-              largeTitle: const Text('Browse'),
+              middle: const Text(browsePageTitle),
+              largeTitle: const Text(browsePageTitle),
               alwaysShowMiddle: false,
               stretch: true,
               trailing: CustomPopupMenu(
@@ -149,6 +157,7 @@ class _BrowseState extends State<Browse> {
                       children: [
                         CupertinoListTile(
                           onTap: () {
+                            show(context, aboutPage(context), true);
                             _controller.hideMenu();
                           },
                           title: const Text('Scan Documents'),
@@ -158,6 +167,7 @@ class _BrowseState extends State<Browse> {
                         CupertinoListTile(
                           onTap: () {
                             _controller.hideMenu();
+                            show(context, const ConnectToServer(), true);
                           },
                           title: const Text('Connect to Server'),
                           trailing: const Icon(

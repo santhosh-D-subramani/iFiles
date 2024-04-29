@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 const appName = 'iFiles';
+const browsePageTitle = 'Browse';
 
 String getFileSize(String path) {
   File file = File(path);
@@ -18,12 +19,12 @@ String getFileSize(String path) {
   return fileSizeInKB < 1
       ? '${fileSizeInBytes.toStringAsFixed(1)} B'
       : fileSizeInMB < 1
-          ? '${fileSizeInKB.toStringAsFixed(1)} Kb'
-          : fileSizeInGB < 1
-              ? '${fileSizeInMB.toStringAsFixed(1)} Mb'
-              : fileSizeInGB > 1
-                  ? '${fileSizeInGB.toStringAsFixed(1)} Gb'
-                  : '';
+      ? '${fileSizeInKB.toStringAsFixed(1)} Kb'
+      : fileSizeInGB < 1
+      ? '${fileSizeInMB.toStringAsFixed(1)} Mb'
+      : fileSizeInGB > 1
+      ? '${fileSizeInGB.toStringAsFixed(1)} Gb'
+      : '';
 }
 
 createFolder(BuildContext context, FileManagerController controller) {
@@ -35,8 +36,8 @@ createFolder(BuildContext context, FileManagerController controller) {
           title: const Text('New Folder'),
           content: CupertinoListTile(
               title: CupertinoTextField(
-            controller: folderName,
-          )),
+                controller: folderName,
+              )),
           actions: [
             CupertinoDialogAction(
               isDefaultAction: true,
@@ -48,7 +49,7 @@ createFolder(BuildContext context, FileManagerController controller) {
                         controller.getCurrentPath, folderName.text);
                     // Open Created Folder
                     controller.setCurrentPath =
-                        "${controller.getCurrentPath}/${folderName.text}";
+                    "${controller.getCurrentPath}/${folderName.text}";
                   }
                 } catch (e) {
                   if (kDebugMode) {
@@ -90,8 +91,8 @@ Future<dynamic> dateFetcher(var entity) async {
   return i == 0
       ? DateFormat('h:mm a').format(date)
       : i == 1
-          ? 'Yesterday'
-          : formattedDate;
+      ? 'Yesterday'
+      : formattedDate;
 }
 
 final DecorationTween tween = DecorationTween(

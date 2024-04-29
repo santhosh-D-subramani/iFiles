@@ -1,11 +1,11 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ModalBottomSheetRoute;
 import 'package:flutter/services.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 import '/common/common.dart';
 import 'screens/home_page.dart';
-import 'screens/support_screens/modal_fit.dart';
+import 'package:xfiles/screens/support_screens/about_page.dart';
 
 void main() {
   runApp(
@@ -24,19 +24,16 @@ class MyApp extends StatelessWidget {
       title: appName,
       theme: const CupertinoThemeData(brightness: Brightness.light),
       debugShowCheckedModeBanner: false,
-      localizationsDelegates: const [
+      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
         DefaultMaterialLocalizations.delegate,
-        DefaultCupertinoLocalizations.delegate,
         DefaultWidgetsLocalizations.delegate,
+        DefaultCupertinoLocalizations.delegate,
       ],
       onGenerateRoute: (RouteSettings settings) {
         switch (settings.name) {
           case '/':
             return MaterialWithModalsPageRoute(
-                builder: (_) => const MyHomePage(
-                      title: appName,
-                    ),
-                settings: settings);
+                builder: (_) => const MyHomePage(), settings: settings);
         }
         return MaterialPageRoute(
           builder: (context) => Scaffold(
@@ -44,17 +41,18 @@ class MyApp extends StatelessWidget {
               body: Builder(
                 builder: (context) => CupertinoPageScaffold(
                   navigationBar: CupertinoNavigationBar(
-                    transitionBetweenRoutes: true,
-                    middle: const Text('Normal Navigation Presentation'),
+                    transitionBetweenRoutes: false,
+                    middle: const Text('Normal Navigation'),
                     trailing: GestureDetector(
                       child: const Icon(Icons.arrow_upward),
                       onTap: () =>
                           CupertinoScaffold.showCupertinoModalBottomSheet(
                         expand: true,
                         context: context,
-                        backgroundColor: CupertinoColors.systemBackground,
+                        backgroundColor: Colors.transparent,
                         builder: (context) => Stack(
                           children: <Widget>[
+                            aboutPage(context),
                             Positioned(
                               height: 40,
                               left: 40,
@@ -72,9 +70,7 @@ class MyApp extends StatelessWidget {
                     ),
                   ),
                   child: Center(
-                    child: ModalFit(
-                      title: '',
-                    ),
+                    child: Container(),
                   ),
                 ),
               ),
