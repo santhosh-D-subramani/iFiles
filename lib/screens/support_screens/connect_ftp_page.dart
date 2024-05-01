@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:ftpconnect/ftpconnect.dart';
+import 'package:samba_browser/samba_browser.dart';
+import '/support/share_prefs.dart';
 
 class ConnectToServer extends StatefulWidget {
   const ConnectToServer({super.key});
@@ -16,18 +16,7 @@ class _ConnectToServerState extends State<ConnectToServer> {
   TextEditingController passwordTextEditingController = TextEditingController();
   bool guest = false;
   bool registeredUser = true;
-
-  // Future<bool> connectToFTPServer(host, user, pass) async {
-  //   FTPConnect ftpConnect = FTPConnect(
-  //     host,
-  //     user: user,
-  //     pass: pass,
-  //     showLog: true,
-  //     timeout: 120,
-  //   );
-  //   return await ftpConnect.connect();
-  //
-  // }
+  Future<List>? shareFuture;
 
   void toggleBoolValue(bool isGuest) {
     setState(() {
@@ -72,25 +61,22 @@ class _ConnectToServerState extends State<ConnectToServer> {
                         padding: EdgeInsets.zero,
                         onPressed: () async {
                           if (serverTextEditingController.text.isNotEmpty) {
-                            final FTPConnect ftpConnect = FTPConnect(
-                              "172.20.10.2",
-                              user: "pc",
-                              pass: "123",
-                              showLog: true,
-                            );
-                            // connectToFTPServer(
-                            //     serverTextEditingController.text,
-                            //     nameTextEditingController.text,
-                            //     passwordTextEditingController.text);
-                            await ftpConnect.connect();
-                            if (ftpConnect.connect().toString() !=
-                                'Connecting...') {
-                              print('connected ');
-                              if (context.mounted) {
-                                Navigator.pop(context);
-                              }
-                            } else {
-                              print('connecting or error ');
+                            setState(() {
+                              shareFuture = SambaBrowser.getShareList(
+                                  serverTextEditingController.text,
+                                  '',
+                                  nameTextEditingController.text,
+                                  passwordTextEditingController.text);
+                            });
+                            if (shareFuture != null) {
+                              BoolStorage boolBunk = BoolStorage();
+                              boolBunk.setServerUrl(
+                                  serverTextEditingController.text);
+                              boolBunk
+                                  .setUsername(nameTextEditingController.text);
+                              boolBunk.setPassword(
+                                  passwordTextEditingController.text);
+                              Navigator.pop(context);
                             }
                           }
                         },
@@ -101,8 +87,6 @@ class _ConnectToServerState extends State<ConnectToServer> {
                       ))
                 ],
               ),
-              //  trailing:
-              //     GestureDetector(onTap: () {}, child: const Text('Connect')),
             ),
             CupertinoFormSection.insetGrouped(
                 margin: const EdgeInsets.all(8.0),
@@ -181,6 +165,26 @@ class _ConnectToServerState extends State<ConnectToServer> {
                     ))
                   ]),
             ),
+            if (shareFuture != null)
+              FutureBuilder(
+                  future: shareFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return Column(children: [
+                        const Text('An error has occurred.'),
+                        Text(snapshot.error.toString())
+                      ]);
+                    }
+
+                    if (!snapshot.hasData) {
+                      return const CupertinoActivityIndicator();
+                    }
+
+                    List<String> shares =
+                        (snapshot.data as List).cast<String>();
+                    return Column(
+                        children: shares.map((e) => Text(e)).toList());
+                  })
           ],
         ),
       ),

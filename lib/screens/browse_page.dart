@@ -5,13 +5,16 @@ import 'package:file_manager/file_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:samba_browser/samba_browser.dart';
 import 'package:xfiles/common/common.dart';
 import 'package:xfiles/screens/support_screens/connect_ftp_page.dart';
 import 'package:xfiles/screens/support_screens/modal_fit.dart';
 import 'package:xfiles/screens/support_screens/settings_page.dart';
 
+import '../support/share_prefs.dart';
 import '../widgets/custom_list_tile.dart';
 import '../widgets/expandable_widget.dart';
 import 'documents_screen.dart';
@@ -31,11 +34,12 @@ class _BrowseState extends State<Browse> {
   List<Directory> storages = [];
   final FileManagerController controller = FileManagerController();
   final CustomPopupMenuController _controller = CustomPopupMenuController();
+  Future<List>? shareFuture;
 
-  // double _diskSpace = 0;
-  // double _totalDiskSpace = 0;
   Map<Directory, double> _directorySpace = {};
   Map<Directory, double> _directorySpace2 = {};
+  BoolStorage boolBunk = BoolStorage();
+  String s = '', n = '', p = '';
 
   void getAllStorages() async {
     List<Directory> storagesTemp = (await getExternalStorageDirectories())!;
@@ -56,10 +60,6 @@ class _BrowseState extends State<Browse> {
   }
 
   Future<void> initDiskSpace() async {
-    // double diskSpace, totalDiskSpace = 0;
-
-    // diskSpace = (await DiskSpace.getFreeDiskSpace)!;
-    // totalDiskSpace = (await DiskSpace.getTotalDiskSpace)!;
     List<Directory> directories;
     Map<Directory, double> directorySpace = {};
     Map<Directory, double> directorySpace2 = {};
@@ -78,8 +78,6 @@ class _BrowseState extends State<Browse> {
     if (!mounted) return;
 
     setState(() {
-      // _diskSpace = diskSpace / (1024);
-      //_totalDiskSpace = totalDiskSpace / (1024);
       _directorySpace = directorySpace;
       _directorySpace2 = directorySpace2;
     });
@@ -102,9 +100,35 @@ class _BrowseState extends State<Browse> {
                     : '';
   }
 
+  Future<void> _loadStringValue() async {
+    String s1 = await boolBunk.getServerUrl();
+    String n1 = await boolBunk.getUsername();
+    String p1 = await boolBunk.getPassword();
+    setState(() {
+      s = s1;
+      n = n1;
+      p = p1;
+    });
+    getSmbFiles();
+    print('$s ,$n ,$p');
+  }
+
+  void getSmbFiles() async {
+    setState(() {
+      s.isNotEmpty && n.isNotEmpty && p.isNotEmpty
+          ? shareFuture = SambaBrowser.getShareList(s, '', n, p)
+          : null;
+    });
+    shareFuture != null
+        ? print('shareFuture alive')
+        : print('shareFuture dead null');
+  }
+
+  // smb://172.20.10.2/
   @override
   void initState() {
     super.initState();
+    _loadStringValue();
 
     initDiskSpace();
     getAllStorages();
@@ -131,8 +155,6 @@ class _BrowseState extends State<Browse> {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final newPath = '$trashDir/${timestamp}_$fileName';
   }
-
-  void createFolder(String path) {}
 
   @override
   Widget build(BuildContext context) {
@@ -311,6 +333,49 @@ class _BrowseState extends State<Browse> {
                         ],
                       ),
                     ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    if (shareFuture != null)
+                      ExpandableWidget(
+                        header: 'Shared',
+                        content: FutureBuilder(
+                            future: shareFuture,
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const CupertinoActivityIndicator(); // Placeholder for loading state
+                              }
+                              if (snapshot.hasError) {
+                                return Text(
+                                    'Error: ${snapshot.error}'); // Placeholder for error state
+                              }
+                              String title = s;
+                              if (kDebugMode) {
+                                print(s);
+                              }
+                              return listTile(
+                                  title,
+                                  CupertinoIcons.globe,
+                                  Row(
+                                    children: [
+                                      GestureDetector(
+                                          onTap: () {},
+                                          child: const Icon(
+                                              CupertinoIcons.eject_fill)),
+                                      const Icon(
+                                          CupertinoIcons.chevron_forward),
+                                    ],
+                                  ), () {
+                                Navigator.push(
+                                    context,
+                                    CupertinoPageRoute(
+                                        builder: (context) => FolderScreen(
+                                              entity: s,
+                                            )));
+                              });
+                            }),
+                      ),
                   ],
                 ),
               ),

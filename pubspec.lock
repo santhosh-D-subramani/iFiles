@@ -152,14 +152,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  ftpconnect:
-    dependency: "direct main"
-    description:
-      name: ftpconnect
-      sha256: "9b51b92a2b6ce4757d76d3bf66497eece1e914958969b61cdaf61f418aab9381"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.7"
   intl:
     dependency: "direct main"
     description:
@@ -368,6 +360,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.8"
+  samba_browser:
+    dependency: "direct main"
+    description:
+      name: samba_browser
+      sha256: ae52a891f4d223a7dad041689fea647a3315ca1ffda3fe9b90ab1b59f1916f42
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.2"
   shared_preferences:
     dependency: "direct main"
     description:
