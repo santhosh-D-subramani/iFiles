@@ -6,9 +6,60 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+import 'package:path/path.dart';
+
+import '../screens/browse_page.dart';
 
 const appName = 'iFiles';
 const browsePageTitle = 'Browse';
+
+Future<void> copyPath(String from, String to) async {
+  if (!await Directory(from).exists()) {
+    if (kDebugMode) {
+      print('source directory not found');
+    }
+  }
+
+  if (!await Directory(to).exists()) {
+    await Directory(to).create(recursive: true);
+  }
+
+  // await Directory(to).create(recursive: true);
+  await for (final file in Directory(from).list(recursive: true)) {
+    await Directory('$to${from.split('/').last}').create(recursive: true);
+    print(from.split('/').last);
+    String copyFolderName = '$to${from.split('/').last}';
+    print(copyFolderName);
+    final copyTo = join(copyFolderName, relative(file.path, from: from));
+    if (kDebugMode) {
+      print(copyTo);
+    }
+    if (file is Directory) {
+      await Directory(copyTo).create(recursive: true);
+    } else if (file is File) {
+      await File(file.path).copy(copyTo);
+    } else if (file is Link) {
+      await Link(copyTo).create(await file.target(), recursive: true);
+    }
+  }
+}
+
+Future<void> copyFiles(String from, String to) async {
+  Directory destDir = Directory(to);
+  if (!await Directory(to).exists()) {
+    await destDir.create(recursive: true);
+  }
+  String fileName = basename(from); // Using path package to get the basename
+  String fullPath = join(
+      to, fileName); // Using path package to create the full destination path
+
+  // Perform the copy operation
+  await File(from).copy(fullPath);
+
+  // Debug output
+  print('Copied from: $from');
+  print('Copied to: $fullPath');
+}
 
 String getFileSize(String path) {
   File file = File(path);
@@ -19,12 +70,12 @@ String getFileSize(String path) {
   return fileSizeInKB < 1
       ? '${fileSizeInBytes.toStringAsFixed(1)} B'
       : fileSizeInMB < 1
-      ? '${fileSizeInKB.toStringAsFixed(1)} Kb'
-      : fileSizeInGB < 1
-      ? '${fileSizeInMB.toStringAsFixed(1)} Mb'
-      : fileSizeInGB > 1
-      ? '${fileSizeInGB.toStringAsFixed(1)} Gb'
-      : '';
+          ? '${fileSizeInKB.toStringAsFixed(1)} Kb'
+          : fileSizeInGB < 1
+              ? '${fileSizeInMB.toStringAsFixed(1)} Mb'
+              : fileSizeInGB > 1
+                  ? '${fileSizeInGB.toStringAsFixed(1)} Gb'
+                  : '';
 }
 
 createFolder(BuildContext context, FileManagerController controller) {
@@ -36,8 +87,8 @@ createFolder(BuildContext context, FileManagerController controller) {
           title: const Text('New Folder'),
           content: CupertinoListTile(
               title: CupertinoTextField(
-                controller: folderName,
-              )),
+            controller: folderName,
+          )),
           actions: [
             CupertinoDialogAction(
               isDefaultAction: true,
@@ -49,7 +100,7 @@ createFolder(BuildContext context, FileManagerController controller) {
                         controller.getCurrentPath, folderName.text);
                     // Open Created Folder
                     controller.setCurrentPath =
-                    "${controller.getCurrentPath}/${folderName.text}";
+                        "${controller.getCurrentPath}/${folderName.text}";
                   }
                 } catch (e) {
                   if (kDebugMode) {
@@ -91,8 +142,8 @@ Future<dynamic> dateFetcher(var entity) async {
   return i == 0
       ? DateFormat('h:mm a').format(date)
       : i == 1
-      ? 'Yesterday'
-      : formattedDate;
+          ? 'Yesterday'
+          : formattedDate;
 }
 
 final DecorationTween tween = DecorationTween(

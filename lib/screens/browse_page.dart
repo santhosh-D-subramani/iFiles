@@ -5,14 +5,10 @@ import 'package:file_manager/file_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:samba_browser/samba_browser.dart';
 import 'package:xfiles/common/common.dart';
 import 'package:xfiles/screens/support_screens/connect_ftp_page.dart';
-import 'package:xfiles/screens/support_screens/modal_fit.dart';
-import 'package:xfiles/screens/support_screens/settings_page.dart';
 
 import '../support/share_prefs.dart';
 import '../widgets/custom_list_tile.dart';
@@ -110,7 +106,9 @@ class _BrowseState extends State<Browse> {
       p = p1;
     });
     getSmbFiles();
-    print('$s ,$n ,$p');
+    if (kDebugMode) {
+      print('$s ,$n ,$p');
+    }
   }
 
   void getSmbFiles() async {
@@ -129,7 +127,6 @@ class _BrowseState extends State<Browse> {
   void initState() {
     super.initState();
     _loadStringValue();
-
     initDiskSpace();
     getAllStorages();
   }
@@ -137,16 +134,24 @@ class _BrowseState extends State<Browse> {
   void createTrashDirectory() async {
     var folderName = '.trash';
     try {
-      // Create Folder
       if (storages.isNotEmpty) {
         controller.setCurrentPath = storages[0].path;
-        await FileManager.createFolder(controller.getCurrentPath, folderName);
-        print('trash folder created ${controller.getCurrentPath}/.trash');
-        // Open Created Folder
-        // controller.setCurrentPath = controller.getCurrentPath + "/" + folderName;
+        final checkPathExistence =
+            await Directory('${storages[0].path}/$folderName').exists();
+        if (kDebugMode) {
+          print('${storages[0].path}/$folderName does $checkPathExistence');
+        }
+        if (!checkPathExistence) {
+          await FileManager.createFolder(controller.getCurrentPath, folderName);
+          if (kDebugMode) {
+            print('trash folder created ${controller.getCurrentPath}/.trash');
+          }
+        }
       }
     } catch (e) {
-      print('trash folder cant create /.trash $e');
+      if (kDebugMode) {
+        print('trash folder cant create /.trash $e');
+      }
     }
   }
 
@@ -155,6 +160,14 @@ class _BrowseState extends State<Browse> {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final newPath = '$trashDir/${timestamp}_$fileName';
   }
+
+  // bool sharedError = true;
+  //
+  // void _toggleExpanded(bool u) {
+  //   setState(() {
+  //     sharedError = u;
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -209,16 +222,16 @@ class _BrowseState extends State<Browse> {
                     color: Colors.blue),
               ),
             ),
-            const SliverAppBar(
-              pinned: true,
-              // systemOverlayStyle: SystemUiOverlayStyle(
-              //     systemNavigationBarColor:
-              //         CupertinoColors.secondarySystemBackground),
-              backgroundColor: CupertinoColors.secondarySystemBackground,
-              title: CupertinoSearchTextField(
-                placeholder: 'search',
-              ),
-            ),
+            // const SliverAppBar(
+            //   pinned: true,
+            //   // systemOverlayStyle: SystemUiOverlayStyle(
+            //   //     systemNavigationBarColor:
+            //   //         CupertinoColors.secondarySystemBackground),
+            //   backgroundColor: CupertinoColors.secondarySystemBackground,
+            //   title: CupertinoSearchTextField(
+            //     placeholder: 'search',
+            //   ),
+            // ),
             SliverFillRemaining(
               hasScrollBody: false,
               fillOverscroll: true,
@@ -344,36 +357,50 @@ class _BrowseState extends State<Browse> {
                             builder: (context, snapshot) {
                               if (snapshot.connectionState ==
                                   ConnectionState.waiting) {
-                                return const CupertinoActivityIndicator(); // Placeholder for loading state
+                                return const Center(
+                                    child:
+                                        CupertinoActivityIndicator()); // Placeholder for loading state
                               }
                               if (snapshot.hasError) {
-                                return Text(
-                                    'Error: ${snapshot.error}'); // Placeholder for error state
+                                // _toggleExpanded(false);
+                                return const Center(
+                                  child: Text(
+                                    'Error',
+                                  ),
+                                );
                               }
                               String title = s;
                               if (kDebugMode) {
                                 print(s);
                               }
-                              return listTile(
+                              return CupertinoListTile.notched(
+                                backgroundColor:
+                                    const CupertinoDynamicColor.withBrightness(
+                                        color: CupertinoColors.white,
+                                        darkColor: CupertinoColors.systemGrey),
+                                title: Text(
                                   title,
-                                  CupertinoIcons.globe,
-                                  Row(
-                                    children: [
-                                      GestureDetector(
-                                          onTap: () {},
-                                          child: const Icon(
-                                              CupertinoIcons.eject_fill)),
-                                      const Icon(
-                                          CupertinoIcons.chevron_forward),
-                                    ],
-                                  ), () {
-                                Navigator.push(
-                                    context,
-                                    CupertinoPageRoute(
-                                        builder: (context) => FolderScreen(
-                                              entity: s,
-                                            )));
-                              });
+                                  maxLines: 1,
+                                ),
+                                leading: const Icon(CupertinoIcons.globe),
+                                trailing: Row(
+                                  children: [
+                                    GestureDetector(
+                                        onTap: () {},
+                                        child: const Icon(
+                                            CupertinoIcons.eject_fill)),
+                                    const Icon(CupertinoIcons.chevron_forward),
+                                  ],
+                                ),
+                                onTap: () {
+                                  Navigator.push(
+                                      context,
+                                      CupertinoPageRoute(
+                                          builder: (context) => FolderScreen(
+                                                entity: s,
+                                              )));
+                                },
+                              );
                             }),
                       ),
                   ],

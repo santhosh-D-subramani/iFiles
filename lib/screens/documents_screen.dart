@@ -1,27 +1,21 @@
 import 'dart:io';
 
+import 'package:custom_pop_up_menu_fork/custom_pop_up_menu.dart';
 import 'package:file_manager/file_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:open_file/open_file.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:xfiles/screens/support_screens/about_page.dart';
-import 'package:xfiles/screens/support_screens/connect_ftp_page.dart';
-import '../support/share_prefs.dart';
-import '/widgets/error_screen.dart';
-import '/widgets/loading_screen.dart';
+import 'package:provider/provider.dart';
 
 import '../common/common.dart';
+import '../support/share_prefs.dart';
 import '../widgets/empty_folder_screen.dart';
+import '/support/provider_model.dart';
+import '/widgets/error_screen.dart';
+import '/widgets/loading_screen.dart';
 import 'folder.dart';
-import 'package:custom_pop_up_menu_fork/custom_pop_up_menu.dart';
-
-import 'support_screens/modal_fit.dart';
-import 'support_screens/settings_page.dart';
 
 class DocumentScreen extends StatefulWidget {
   const DocumentScreen({super.key, required this.title});
@@ -35,9 +29,14 @@ class DocumentScreen extends StatefulWidget {
 class _DocumentScreenState extends State<DocumentScreen> {
   final FileManagerController controller = FileManagerController();
   final CustomPopupMenuController _controller = CustomPopupMenuController();
+  final CustomPopupMenuController _controller1 = CustomPopupMenuController();
   final BoolStorage _boolStorage = BoolStorage();
-
   bool _boolValue = false;
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -77,94 +76,206 @@ class _DocumentScreenState extends State<DocumentScreen> {
     return CupertinoPageScaffold(
       resizeToAvoidBottomInset: true,
       navigationBar: CupertinoNavigationBar(
-          middle: ValueListenableBuilder(
-              valueListenable: controller.titleNotifier,
-              builder: (context, title, _) {
-                return Text(title == '0' ? widget.title : title);
-              }),
+          middle: CustomPopupMenu(
+            controller: _controller1,
+            enablePassEvent: false,
+            pressType: PressType.longPress,
+            child: ValueListenableBuilder(
+                valueListenable: controller.titleNotifier,
+                builder: (context, title, _) {
+                  return Text(
+                    title == '0' ? widget.title : title,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  );
+                }),
+            menuBuilder: () => ClipRRect(
+              borderRadius: BorderRadius.circular(15),
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width / 2,
+                child: CupertinoListSection(
+                  topMargin: 0,
+                  children: [
+                    CupertinoListTile(
+                      onTap: () {
+                        _controller1.hideMenu();
+                        createFolder(context, controller);
+                      },
+                      title: const Text('New Folder'),
+                      trailing:
+                          const Icon(CupertinoIcons.folder_fill_badge_plus),
+                    ),
+                    CupertinoListTile(
+                      onTap: () {
+                        _controller1.hideMenu();
+                        var i =
+                            Provider.of<MyStringModel>(context, listen: false);
+
+                        if (i.isFile == 'true') {
+                          copyFiles(i.myString, controller.getCurrentPath);
+                          setState(() {});
+                        } else if (i.isFile == 'false') {
+                          copyPath(i.myString, controller.getCurrentPath);
+                          setState(() {});
+                        } else {
+                          showDialog(
+                              context: context,
+                              builder: (context) {
+                                return CupertinoAlertDialog(
+                                  title: const Text('Nothing has copied'),
+                                  content: const Text(
+                                      'Please copy something to paste'),
+                                  actions: [
+                                    CupertinoDialogAction(
+                                      isDefaultAction: true,
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
+                                );
+                              });
+                        }
+
+                        if (kDebugMode) {
+                          print('path: ${i.myString}');
+                          print(controller.getCurrentPath);
+                        }
+                        if (kDebugMode) {
+                          print('isFile: ${i.isFile}');
+                        }
+                      },
+                      title: const Text('Paste'),
+                      trailing: const Icon(CupertinoIcons.doc_on_clipboard),
+                    ),
+                    CupertinoListTile(
+                      onTap: () {
+                        _controller1.hideMenu();
+                      },
+                      title: const Text('Get Info'),
+                      trailing: const Icon(CupertinoIcons.info_circle),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
           trailing: CustomPopupMenu(
             controller: _controller,
             enablePassEvent: false,
             pressType: PressType.singleClick,
             child:
                 const Icon(CupertinoIcons.ellipsis_circle, color: Colors.blue),
-            menuBuilder: () => SizedBox(
-              width: MediaQuery.of(context).size.width / 1.4,
-              child: CupertinoListSection(
-                topMargin: 0,
-                children: [
-                  CupertinoListTile(
-                    onTap: () {
-                      _controller.hideMenu();
-                      show(context, const ConnectToServer(), true);
-                    },
-                    title: const Text('Select'),
-                    trailing: const Icon(CupertinoIcons.doc_text_viewfinder),
-                  ),
-                  CupertinoListTile(
-                    onTap: () {
-                      createFolder(context, controller);
-                      _controller.hideMenu();
-                    },
-                    title: const Text('New Folder'),
-                    trailing: const Icon(
-                        CupertinoIcons.slider_horizontal_below_rectangle),
-                  ),
-                  CupertinoListTile(
+            menuBuilder: () => ClipRRect(
+              borderRadius: BorderRadius.circular(15),
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width / 1.4,
+                child: CupertinoListSection(
+                  topMargin: 0,
+                  children: [
+                    CupertinoListTile(
                       onTap: () {
+                        createFolder(context, controller);
                         _controller.hideMenu();
                       },
-                      title: const Text('Connect to Server')),
-                  const SizedBox(
-                    height: 5,
-                  ),
-                  CupertinoListTile(
+                      title: const Text('New Folder'),
+                      trailing: const Icon(
+                          CupertinoIcons.slider_horizontal_below_rectangle),
+                    ),
+                    CupertinoListTile(
                       onTap: () {
                         _controller.hideMenu();
+                        var i =
+                            Provider.of<MyStringModel>(context, listen: false);
+
+                        if (i.isFile == 'true') {
+                          copyFiles(i.myString, controller.getCurrentPath);
+                          setState(() {});
+                        } else if (i.isFile == 'false') {
+                          copyPath(i.myString, controller.getCurrentPath);
+                          setState(() {});
+                        } else {
+                          showDialog(
+                              context: context,
+                              builder: (context) {
+                                return CupertinoAlertDialog(
+                                  title: const Text('Nothing has copied'),
+                                  content: const Text(
+                                      'Please copy something to paste'),
+                                  actions: [
+                                    CupertinoDialogAction(
+                                      isDefaultAction: true,
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
+                                );
+                              });
+                        }
+
+                        if (kDebugMode) {
+                          print('path: ${i.myString}');
+                          print(controller.getCurrentPath);
+                        }
+                        if (kDebugMode) {
+                          print('isFile: ${i.isFile}');
+                        }
                       },
-                      title: const Text('Icons')),
-                  CupertinoListTile(
-                      onTap: () {
-                        _controller.hideMenu();
-                      },
-                      title: const Text('List')),
-                  const Divider(),
-                  CupertinoListTile(
-                      onTap: () {
-                        _controller.hideMenu();
-                      },
-                      title: const Text('Name')),
-                  CupertinoListTile(
-                      onTap: () {
-                        _controller.hideMenu();
-                      },
-                      title: const Text('Kind')),
-                  CupertinoListTile(
-                      onTap: () {
-                        _controller.hideMenu();
-                      },
-                      title: const Text('Date')),
-                  CupertinoListTile(
-                      onTap: () {
-                        _controller.hideMenu();
-                      },
-                      title: const Text('Size')),
-                  CupertinoListTile(
-                      onTap: () {
-                        _controller.hideMenu();
-                      },
-                      title: const Text('Tags')),
-                  const Divider(),
-                  CupertinoListTile(
-                      leading: !_boolValue
-                          ? const Icon(CupertinoIcons.check_mark)
-                          : const Text(''),
-                      onTap: () {
-                        _toggleBoolValue();
-                        _controller.hideMenu();
-                      },
-                      title: const Text('Show All Extensions')),
-                ],
+                      title: const Text('Paste'),
+                      trailing:
+                          const Icon(CupertinoIcons.doc_on_clipboard_fill),
+                    ),
+                    const Divider(),
+                    CupertinoListTile(
+                        onTap: () {
+                          _controller.hideMenu();
+                        },
+                        title: const Text('Icons')),
+                    CupertinoListTile(
+                        onTap: () {
+                          _controller.hideMenu();
+                        },
+                        title: const Text('List')),
+                    const Divider(),
+                    CupertinoListTile(
+                        onTap: () {
+                          _controller.hideMenu();
+                        },
+                        title: const Text('Name')),
+                    CupertinoListTile(
+                        onTap: () {
+                          _controller.hideMenu();
+                        },
+                        title: const Text('Kind')),
+                    CupertinoListTile(
+                        onTap: () {
+                          _controller.hideMenu();
+                        },
+                        title: const Text('Date')),
+                    CupertinoListTile(
+                        onTap: () {
+                          _controller.hideMenu();
+                        },
+                        title: const Text('Size')),
+                    CupertinoListTile(
+                        onTap: () {
+                          _controller.hideMenu();
+                        },
+                        title: const Text('Tags')),
+                    const Divider(),
+                    CupertinoListTile(
+                        leading: !_boolValue
+                            ? const Icon(CupertinoIcons.check_mark)
+                            : const Text(''),
+                        onTap: () {
+                          _toggleBoolValue();
+                          _controller.hideMenu();
+                        },
+                        title: const Text('Show All Extensions')),
+                  ],
+                ),
               ),
             ),
           )),
@@ -230,6 +341,13 @@ class _DocumentScreenState extends State<DocumentScreen> {
                                     CupertinoContextMenuAction(
                                       onPressed: () {
                                         Navigator.of(ctx).pop();
+                                        context.read<MyStringModel>().updateString(
+                                            entities[index].path,
+                                            '${!FileManager.isDirectory(entities[index])}');
+                                        if (kDebugMode) {
+                                          print(
+                                              '${entities[index].path} - ${!FileManager.isDirectory(entities[index])}');
+                                        }
                                       },
                                       isDefaultAction: true,
                                       trailingIcon:
