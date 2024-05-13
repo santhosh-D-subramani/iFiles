@@ -4,11 +4,11 @@ import 'package:file_manager/file_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_archive/flutter_archive.dart';
 import 'package:intl/intl.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:path/path.dart';
-
-import '../screens/browse_page.dart';
 
 const appName = 'iFiles';
 const browsePageTitle = 'Browse';
@@ -59,6 +59,56 @@ Future<void> copyFiles(String from, String to) async {
   // Debug output
   print('Copied from: $from');
   print('Copied to: $fullPath');
+}
+
+Future<void> moveFile(String from, String to) async {
+  await copyFiles(from, to); // move file
+  await File(from).delete(recursive: true); // Delete the original directory
+  print('Moved from: $from');
+  print('Moved to: $to');
+}
+
+Future<void> movePath(String from, String to) async {
+  await copyPath(from, to); // Copy files and folders
+  await Directory(from)
+      .delete(recursive: true); // Delete the original directory
+  print('Moved from: $from');
+  print('Moved to: $to');
+}
+
+Future<void> zipTheFile(Directory sourcePath, String fileName) async {
+  final files = <File>[];
+  files.add(File(fileName));
+  String fileNameEnd = fileName;
+  if (File('$sourcePath/$fileName.zip').existsSync()) {}
+  final zipFile = _createZipFile(
+      sourcePath.path, "${fileName.split('/').last.split('.').first}.zip");
+  if (kDebugMode) {
+    print("Writing file to zip file in: ${zipFile.path}");
+  }
+  try {
+    await ZipFile.createFromFiles(
+        sourceDir: sourcePath,
+        files: files,
+        zipFile: zipFile,
+        includeBaseDirectory: false);
+  } on PlatformException catch (e) {
+    if (kDebugMode) {
+      print(e);
+    }
+  }
+}
+
+File _createZipFile(currentPath, fileName) {
+  final zipFile = File('$currentPath/$fileName');
+
+  if (zipFile.existsSync()) {
+    if (kDebugMode) {
+      print("Deleting existing zip file: ${zipFile.path}");
+    }
+    zipFile.deleteSync();
+  }
+  return zipFile;
 }
 
 String getFileSize(String path) {

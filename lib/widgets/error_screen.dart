@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 
 Widget errorScreen(error) {
+  RegExp regex = RegExp(r'OS Error: (.+),');
+  Match? match = regex.firstMatch(error.toString());
   return Center(
     child: Padding(
       padding: const EdgeInsets.all(8.0),
@@ -15,6 +17,14 @@ Widget errorScreen(error) {
           const SizedBox(
             height: 8,
           ),
+          if (match != null)
+            Text(
+              match.group(1)!,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
           Text(
             error.toString(),
             style: const TextStyle(

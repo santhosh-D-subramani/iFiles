@@ -1,22 +1,23 @@
 import 'dart:io';
 
+import 'package:custom_pop_up_menu_fork/custom_pop_up_menu.dart';
 import 'package:disk_space/disk_space.dart';
 import 'package:file_manager/file_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:samba_browser/samba_browser.dart';
 import 'package:xfiles/common/common.dart';
 import 'package:xfiles/screens/support_screens/connect_ftp_page.dart';
 
+import '../support/provider_model.dart';
 import '../support/share_prefs.dart';
 import '../widgets/custom_list_tile.dart';
 import '../widgets/expandable_widget.dart';
 import 'documents_screen.dart';
 import 'folder.dart';
-import 'package:custom_pop_up_menu_fork/custom_pop_up_menu.dart';
-
 import 'support_screens/about_page.dart';
 
 class Browse extends StatefulWidget {
@@ -47,6 +48,15 @@ class _BrowseState extends State<Browse> {
     }).toList();
     storages = storagesTemp;
     createTrashDirectory();
+    if (mounted) {
+      //var i = Provider.of<MyStringModel>(context, listen: false);
+      context
+          .read<MyStringModel>()
+          .setStoragePath(storagesTemp[0].path, storagesTemp[1].path);
+      if (kDebugMode) {
+        print('added to provider');
+      }
+    }
     setState(() {});
     if (kDebugMode) {
       print('getAllStorage 1: ${storagesTemp[0]}');
@@ -155,11 +165,11 @@ class _BrowseState extends State<Browse> {
     }
   }
 
-  Future<void> moveToTrash(String path, String fileName) async {
-    final trashDir = Directory('${storages[0].path}/.trash');
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final newPath = '$trashDir/${timestamp}_$fileName';
-  }
+  // Future<void> moveToTrash(String path, String fileName) async {
+  //   final trashDir = Directory('${storages[0].path}/.trash');
+  //   final timestamp = DateTime.now().millisecondsSinceEpoch;
+  //   final newPath = '$trashDir/${timestamp}_$fileName';
+  // }
 
   // bool sharedError = true;
   //

@@ -343,10 +343,42 @@ class _FolderScreenState extends State<FolderScreen> {
                                 actions: <Widget>[
                                   CupertinoContextMenuAction(
                                     onPressed: () {
+                                      Navigator.pop(ctx);
+                                    },
+                                    trailingIcon: CupertinoIcons.info_circle,
+                                    child: const Text('Get Info'),
+                                  ),
+                                  CupertinoContextMenuAction(
+                                    onPressed: () {
+                                      Navigator.pop(ctx);
+                                    },
+                                    trailingIcon: CupertinoIcons.pencil,
+                                    child: const Text('Rename'),
+                                  ),
+                                  CupertinoContextMenuAction(
+                                    onPressed: () {
+                                      Navigator.pop(ctx);
+                                      zipTheFile(controller.getCurrentDirectory,
+                                          entity.path);
+                                      setState(() {});
+                                    },
+                                    trailingIcon: CupertinoIcons.archivebox,
+                                    child: entity.path
+                                                .split('/')
+                                                .last
+                                                .split('.')
+                                                .last ==
+                                            'zip'
+                                        ? const Text('Uncompress')
+                                        : const Text('Compress'),
+                                  ),
+                                  CupertinoContextMenuAction(
+                                    onPressed: () {
                                       Navigator.of(ctx).pop();
                                       context.read<MyStringModel>().updateString(
                                           entities[index].path,
-                                          '${!FileManager.isDirectory(entities[index])}');
+                                          '${!FileManager.isDirectory(entities[index])}',
+                                          'Copy');
                                       if (kDebugMode) {
                                         print(
                                             '${entities[index].path} - ${!FileManager.isDirectory(entities[index])}');
@@ -356,6 +388,21 @@ class _FolderScreenState extends State<FolderScreen> {
                                     trailingIcon:
                                         CupertinoIcons.doc_on_clipboard_fill,
                                     child: const Text('Copy'),
+                                  ),
+                                  CupertinoContextMenuAction(
+                                    onPressed: () {
+                                      Navigator.pop(ctx);
+                                      context.read<MyStringModel>().updateString(
+                                          entities[index].path,
+                                          '${!FileManager.isDirectory(entities[index])}',
+                                          'Move');
+                                      if (kDebugMode) {
+                                        print(
+                                            'move initial data : ${entities[index].path} - ${!FileManager.isDirectory(entities[index])}');
+                                      }
+                                    },
+                                    trailingIcon: CupertinoIcons.folder,
+                                    child: const Text('Move'),
                                   ),
                                   CupertinoContextMenuAction(
                                     onPressed: () {
