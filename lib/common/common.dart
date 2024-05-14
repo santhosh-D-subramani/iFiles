@@ -27,9 +27,13 @@ Future<void> copyPath(String from, String to) async {
   // await Directory(to).create(recursive: true);
   await for (final file in Directory(from).list(recursive: true)) {
     await Directory('$to${from.split('/').last}').create(recursive: true);
-    print(from.split('/').last);
+    if (kDebugMode) {
+      print(from.split('/').last);
+    }
     String copyFolderName = '$to${from.split('/').last}';
-    print(copyFolderName);
+    if (kDebugMode) {
+      print(copyFolderName);
+    }
     final copyTo = join(copyFolderName, relative(file.path, from: from));
     if (kDebugMode) {
       print(copyTo);
@@ -57,30 +61,43 @@ Future<void> copyFiles(String from, String to) async {
   await File(from).copy(fullPath);
 
   // Debug output
-  print('Copied from: $from');
-  print('Copied to: $fullPath');
+  if (kDebugMode) {
+    print('Copied from: $from');
+  }
+  if (kDebugMode) {
+    print('Copied to: $fullPath');
+  }
 }
 
 Future<void> moveFile(String from, String to) async {
   await copyFiles(from, to); // move file
   await File(from).delete(recursive: true); // Delete the original directory
-  print('Moved from: $from');
-  print('Moved to: $to');
+  if (kDebugMode) {
+    print('Moved from: $from');
+  }
+  if (kDebugMode) {
+    print('Moved to: $to');
+  }
 }
 
 Future<void> movePath(String from, String to) async {
   await copyPath(from, to); // Copy files and folders
   await Directory(from)
       .delete(recursive: true); // Delete the original directory
-  print('Moved from: $from');
-  print('Moved to: $to');
+  if (kDebugMode) {
+    print('Moved from: $from');
+  }
+  if (kDebugMode) {
+    print('Moved to: $to');
+  }
 }
 
 Future<void> zipTheFile(Directory sourcePath, String fileName) async {
   final files = <File>[];
   files.add(File(fileName));
-  String fileNameEnd = fileName;
-  if (File('$sourcePath/$fileName.zip').existsSync()) {}
+  String fileNameEnd = fileName.split('.').first;
+  int suffix = 1;
+
   final zipFile = _createZipFile(
       sourcePath.path, "${fileName.split('/').last.split('.').first}.zip");
   if (kDebugMode) {
@@ -94,20 +111,37 @@ Future<void> zipTheFile(Directory sourcePath, String fileName) async {
         includeBaseDirectory: false);
   } on PlatformException catch (e) {
     if (kDebugMode) {
-      print(e);
+      print('zip error : $e');
     }
   }
 }
 
 File _createZipFile(currentPath, fileName) {
-  final zipFile = File('$currentPath/$fileName');
-
-  if (zipFile.existsSync()) {
-    if (kDebugMode) {
-      print("Deleting existing zip file: ${zipFile.path}");
+  int suffix = 1;
+  String fileNAmeEnd = fileName;
+  while (true) {
+    if (!File('$currentPath/$fileNAmeEnd').existsSync()) {
+      break; // Exit the loop if the file doesn't exist
     }
-    zipFile.deleteSync();
+
+    // Extract the suffix from the filename
+    RegExp regExp = RegExp(r'(\d+)(?=.zip$)');
+    Match? match = regExp.firstMatch(fileNAmeEnd);
+    if (match != null) {
+      suffix = int.parse(match.group(0)!) + 1; // Increment the extracted suffix
+      fileNAmeEnd = fileNAmeEnd.replaceAll(regExp, '$suffix');
+    } else {
+      fileNAmeEnd = '$fileName$suffix.zip'; // If no suffix found, add one
+    }
+
+    // if (suffix > 10000) {
+    //   // Exit loop to prevent infinite loop (optional check)
+    //   print('Suffix exceeded limit, exiting loop.');
+    //   break;
+    // }
   }
+  final zipFile = File('$currentPath/$fileNAmeEnd');
+
   return zipFile;
 }
 

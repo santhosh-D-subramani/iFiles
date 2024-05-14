@@ -72,6 +72,7 @@ class _FolderScreenState extends State<FolderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    var i = Provider.of<MyStringModel>(context, listen: false);
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.secondarySystemBackground,
       navigationBar: CupertinoNavigationBar(
@@ -312,23 +313,40 @@ class _FolderScreenState extends State<FolderScreen> {
                             dismissible: DismissiblePane(
                               onDismissed: () async {
                                 FileManager.isDirectory(entity)
-                                    ? await entity.delete(recursive: true)
-                                    : await entity.delete();
-                                if (await entity.exists()) {
-                                } else {
-                                  setState(() {});
-                                }
+                                    ? movePath(
+                                            '${controller.getCurrentPath}/${FileManager.basename(entity)}',
+                                            '${i.internalStorageRootDirectory}/.trash/')
+                                        .whenComplete(() => setState(() {}))
+                                    : moveFile(
+                                            '${controller.getCurrentPath}/${FileManager.basename(entity)}',
+                                            '${i.internalStorageRootDirectory}/.trash/')
+                                        .whenComplete(() => setState(() {}));
                               },
                             ),
                             children: [
                               SlidableAction(
                                 onPressed: (value) async {
-                                  FileManager.isDirectory(entity)
-                                      ? await entity.delete(recursive: true)
-                                      : await entity.delete();
-                                  if (await entity.exists()) {
+                                  if (controller.getCurrentPath ==
+                                          '${i.internalStorageRootDirectory}/.trash/' ||
+                                      controller.getCurrentPath ==
+                                          '${i.sdCardRootDirectory}/.trash/') {
+                                    FileManager.isDirectory(entity)
+                                        ? await entity
+                                            .delete(recursive: true)
+                                            .whenComplete(() => setState(() {}))
+                                        : await entity.delete().whenComplete(
+                                            () => setState(() {}));
                                   } else {
-                                    setState(() {});
+                                    FileManager.isDirectory(entity)
+                                        ? movePath(
+                                                '${controller.getCurrentPath}/${FileManager.basename(entity)}',
+                                                '${i.internalStorageRootDirectory}/.trash/')
+                                            .whenComplete(() => setState(() {}))
+                                        : moveFile(
+                                                '${controller.getCurrentPath}/${FileManager.basename(entity)}',
+                                                '${i.internalStorageRootDirectory}/.trash/')
+                                            .whenComplete(
+                                                () => setState(() {}));
                                   }
                                 },
                                 label: 'Delete',
@@ -419,8 +437,35 @@ class _FolderScreenState extends State<FolderScreen> {
                                     child: const Text('Favorite'),
                                   ),
                                   CupertinoContextMenuAction(
-                                    onPressed: () {
+                                    onPressed: () async {
                                       Navigator.pop(context);
+
+                                      if (controller.getCurrentPath ==
+                                              '${i.internalStorageRootDirectory}/.trash/' ||
+                                          controller.getCurrentPath ==
+                                              '${i.sdCardRootDirectory}/.trash/') {
+                                        FileManager.isDirectory(entity)
+                                            ? await entity
+                                                .delete(recursive: true)
+                                                .whenComplete(
+                                                    () => setState(() {}))
+                                            : await entity
+                                                .delete()
+                                                .whenComplete(
+                                                    () => setState(() {}));
+                                      } else {
+                                        FileManager.isDirectory(entity)
+                                            ? movePath(
+                                                    '${controller.getCurrentPath}/${FileManager.basename(entity)}',
+                                                    '${i.internalStorageRootDirectory}/.trash/')
+                                                .whenComplete(
+                                                    () => setState(() {}))
+                                            : moveFile(
+                                                    '${controller.getCurrentPath}/${FileManager.basename(entity)}',
+                                                    '${i.internalStorageRootDirectory}/.trash/')
+                                                .whenComplete(
+                                                    () => setState(() {}));
+                                      }
                                     },
                                     isDestructiveAction: true,
                                     trailingIcon: CupertinoIcons.delete,

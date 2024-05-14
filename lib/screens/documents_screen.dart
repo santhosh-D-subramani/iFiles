@@ -280,19 +280,13 @@ class _DocumentScreenState extends State<DocumentScreen> {
                               onDismissed: () async {
                                 FileManager.isDirectory(entity)
                                     ? movePath(
-                                        '${controller.getCurrentPath}/${FileManager.basename(entity)}',
-                                        '${i.internalStorageRootDirectory}/.trash/')
+                                            '${controller.getCurrentPath}/${FileManager.basename(entity)}',
+                                            '${i.internalStorageRootDirectory}/.trash/')
+                                        .whenComplete(() => setState(() {}))
                                     : moveFile(
-                                        '${controller.getCurrentPath}/${FileManager.basename(entity)}',
-                                        '${i.internalStorageRootDirectory}/.trash/');
-
-                                // FileManager.isDirectory(entity)
-                                //     ? await entity.delete(recursive: true)
-                                //     : await entity.delete();
-                                if (await entity.exists()) {
-                                } else {
-                                  setState(() {});
-                                }
+                                            '${controller.getCurrentPath}/${FileManager.basename(entity)}',
+                                            '${i.internalStorageRootDirectory}/.trash/')
+                                        .whenComplete(() => setState(() {}));
                               },
                             ),
                             children: [
@@ -300,18 +294,13 @@ class _DocumentScreenState extends State<DocumentScreen> {
                                 onPressed: (value) async {
                                   FileManager.isDirectory(entity)
                                       ? movePath(
-                                          '${controller.getCurrentPath}/${FileManager.basename(entity)}',
-                                          '${i.internalStorageRootDirectory}/.trash/')
+                                              '${controller.getCurrentPath}/${FileManager.basename(entity)}',
+                                              '${i.internalStorageRootDirectory}/.trash/')
+                                          .whenComplete(() => setState(() {}))
                                       : moveFile(
-                                          '${controller.getCurrentPath}/${FileManager.basename(entity)}',
-                                          '${i.internalStorageRootDirectory}/.trash/');
-                                  // FileManager.isDirectory(entity)
-                                  //     ? await entity.delete(recursive: true)
-                                  //     : await entity.delete();
-                                  if (await entity.exists()) {
-                                  } else {
-                                    setState(() {});
-                                  }
+                                              '${controller.getCurrentPath}/${FileManager.basename(entity)}',
+                                              '${i.internalStorageRootDirectory}/.trash/')
+                                          .whenComplete(() => setState(() {}));
                                 },
                                 label: 'Delete',
                                 backgroundColor: CupertinoColors.destructiveRed,
@@ -346,7 +335,14 @@ class _DocumentScreenState extends State<DocumentScreen> {
                                         setState(() {});
                                       },
                                       trailingIcon: CupertinoIcons.archivebox,
-                                      child: const Text('Compress'),
+                                      child: entity.path
+                                                  .split('/')
+                                                  .last
+                                                  .split('.')
+                                                  .last ==
+                                              'zip'
+                                          ? const Text('Uncompress')
+                                          : const Text('Compress'),
                                     ),
                                     // CupertinoContextMenuAction(
                                     //   onPressed: () {
@@ -415,12 +411,15 @@ class _DocumentScreenState extends State<DocumentScreen> {
                                         Navigator.pop(context);
                                         FileManager.isDirectory(entity)
                                             ? movePath(
-                                                '${controller.getCurrentPath}/${FileManager.basename(entity)}',
-                                                '${i.internalStorageRootDirectory}/.trash/')
+                                                    '${controller.getCurrentPath}/${FileManager.basename(entity)}',
+                                                    '${i.internalStorageRootDirectory}/.trash/')
+                                                .whenComplete(
+                                                    () => setState(() {}))
                                             : moveFile(
-                                                '${controller.getCurrentPath}/${FileManager.basename(entity)}',
-                                                '${i.internalStorageRootDirectory}/.trash/');
-                                        setState(() {});
+                                                    '${controller.getCurrentPath}/${FileManager.basename(entity)}',
+                                                    '${i.internalStorageRootDirectory}/.trash/')
+                                                .whenComplete(
+                                                    () => setState(() {}));
                                       },
                                       isDestructiveAction: true,
                                       trailingIcon: CupertinoIcons.delete,
