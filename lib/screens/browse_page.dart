@@ -6,7 +6,9 @@ import 'package:file_manager/file_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:samba_browser/samba_browser.dart';
 import 'package:xfiles/common/common.dart';
@@ -62,6 +64,13 @@ class _BrowseState extends State<Browse> {
       print('getAllStorage 1: ${storagesTemp[0]}');
       print('getAllStorage 2:${storagesTemp[1]}');
       print('storage length : ${storagesTemp.length}');
+    }
+  }
+
+  void requestStoragePermission() async {
+    var status = await Permission.manageExternalStorage.isGranted;
+    if (!status) {
+      await Permission.manageExternalStorage.request();
     }
   }
 
@@ -136,6 +145,7 @@ class _BrowseState extends State<Browse> {
   @override
   void initState() {
     super.initState();
+    requestStoragePermission();
     _loadStringValue();
     initDiskSpace();
     getAllStorages();
@@ -300,9 +310,8 @@ class _BrowseState extends State<Browse> {
                                     const Icon(CupertinoIcons.chevron_forward),
                                   ],
                                 ), () {
-                              Navigator.push(
-                                context,
-                                CupertinoPageRoute(
+                              Navigator.of(context).push(
+                                MaterialWithModalsPageRoute(
                                     builder: (context) =>
                                         locValue.contains('emulated')
                                             ? const DocumentScreen(
@@ -316,12 +325,17 @@ class _BrowseState extends State<Browse> {
                           }),
                           listTile('Recently Deleted', CupertinoIcons.trash,
                               const Icon(CupertinoIcons.chevron_forward), () {
-                            Navigator.push(
-                                context,
-                                CupertinoPageRoute(
+                            Navigator.of(context)
+                                .push(MaterialWithModalsPageRoute(
                                     builder: (context) => FolderScreen(
                                           entity: '${storages[0].path}/.trash',
                                         )));
+                            // Navigator.push(
+                            //     context,
+                            //     MaterialWithModalsPageRoute(
+                            //         builder: (context) => FolderScreen(
+                            //               entity: '${storages[0].path}/.trash',
+                            //             )));
                           }),
                         ],
                       ),
@@ -335,9 +349,8 @@ class _BrowseState extends State<Browse> {
                         children: [
                           listTile('iPhone downloads', CupertinoIcons.folder,
                               const Icon(CupertinoIcons.chevron_forward), () {
-                            Navigator.push(
-                                context,
-                                CupertinoPageRoute(
+                            Navigator.of(context)
+                                .push(MaterialWithModalsPageRoute(
                                     builder: (context) => FolderScreen(
                                           entity:
                                               '${storages[0].path}/Download',
@@ -345,9 +358,8 @@ class _BrowseState extends State<Browse> {
                           }),
                           listTile('SD Card downloads', CupertinoIcons.folder,
                               const Icon(CupertinoIcons.chevron_forward), () {
-                            Navigator.push(
-                                context,
-                                CupertinoPageRoute(
+                            Navigator.of(context)
+                                .push(MaterialWithModalsPageRoute(
                                     builder: (context) => FolderScreen(
                                           entity:
                                               '${storages[1].path}/Download',
@@ -403,9 +415,8 @@ class _BrowseState extends State<Browse> {
                                   ],
                                 ),
                                 onTap: () {
-                                  Navigator.push(
-                                      context,
-                                      CupertinoPageRoute(
+                                  Navigator.of(context)
+                                      .push(MaterialWithModalsPageRoute(
                                           builder: (context) => FolderScreen(
                                                 entity: s,
                                               )));

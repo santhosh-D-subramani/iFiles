@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "101252675069",
+    "project_id": "ifiles-santhoshdsubramani",
+    "storage_bucket": "ifiles-santhoshdsubramani.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:101252675069:android:320c0f9b7af34df9481594",
+        "android_client_info": {
+          "package_name": "com.santhoshDsubramani.iFiles"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCUzGTEC4y8PHs5eOsfRet_R4oAMmXDdfs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

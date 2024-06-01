@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:custom_pop_up_menu_fork/custom_pop_up_menu.dart';
 import 'package:file_manager/file_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -8,7 +9,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_archive/flutter_archive.dart';
 import 'package:intl/intl.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-import 'package:path/path.dart';
+import 'package:path/path.dart' as Path;
+import 'package:provider/provider.dart';
+import 'package:xfiles/support/show_all_extension_prefs.dart';
+
+import '../screens/support_screens/connect_ftp_page.dart';
+import '../support/provider_model.dart';
 
 const appName = 'iFiles';
 const browsePageTitle = 'Browse';
@@ -34,7 +40,8 @@ Future<void> copyPath(String from, String to) async {
     if (kDebugMode) {
       print(copyFolderName);
     }
-    final copyTo = join(copyFolderName, relative(file.path, from: from));
+    final copyTo =
+        Path.join(copyFolderName, Path.relative(file.path, from: from));
     if (kDebugMode) {
       print(copyTo);
     }
@@ -53,8 +60,9 @@ Future<void> copyFiles(String from, String to) async {
   if (!await Directory(to).exists()) {
     await destDir.create(recursive: true);
   }
-  String fileName = basename(from); // Using path package to get the basename
-  String fullPath = join(
+  String fileName =
+      Path.basename(from); // Using path package to get the basename
+  String fullPath = Path.join(
       to, fileName); // Using path package to create the full destination path
 
   // Perform the copy operation
@@ -95,11 +103,9 @@ Future<void> movePath(String from, String to) async {
 Future<void> zipTheFile(Directory sourcePath, String fileName) async {
   final files = <File>[];
   files.add(File(fileName));
-  String fileNameEnd = fileName.split('.').first;
-  int suffix = 1;
 
-  final zipFile = _createZipFile(
-      sourcePath.path, "${fileName.split('/').last.split('.').first}.zip");
+  final zipFile = _createZipFile(sourcePath.path,
+      "${fileName.split('/').last.split('.').first}.zip", true);
   if (kDebugMode) {
     print("Writing file to zip file in: ${zipFile.path}");
   }
@@ -116,9 +122,47 @@ Future<void> zipTheFile(Directory sourcePath, String fileName) async {
   }
 }
 
-File _createZipFile(currentPath, fileName) {
+Future<void> zipTheDirectory(Directory sourcePath, String fileName) async {
+  final zipFile = _createZipFile(sourcePath.path, '$fileName.zip', false);
+  if (kDebugMode) {
+    print(
+        "Writing to zip file:${sourcePath.path}/$fileName.zip ${zipFile.path}");
+  }
+
+  // int onProgressCallCount1 = 0;
+
+  try {
+    await ZipFile.createFromDirectory(
+      sourceDir: Directory("${sourcePath.path}${"/$fileName"}"),
+      zipFile: zipFile,
+      recurseSubDirs: true,
+      includeBaseDirectory: true,
+      // onZipping: (fileName, isDirectory, progress) {
+      //   var onProgressCallCount1 = 0;
+      //   ++onProgressCallCount1;
+      //   if (kDebugMode) {
+      //     print('Zip #1:');
+      //     print('progress: ${progress.toStringAsFixed(1)}%');
+      //     print('name: $fileName');
+      //     print('isDirectory: $isDirectory');
+      //   }
+      //   return ZipFileOperation.includeItem;
+      // },
+    );
+    // assert(onProgressCallCount1 > 0);
+  } on PlatformException catch (e) {
+    if (kDebugMode) {
+      print(e);
+    }
+  }
+}
+
+File _createZipFile(currentPath, fileName, bool isFile) {
   int suffix = 1;
   String fileNAmeEnd = fileName;
+  if (kDebugMode) {
+    print('fileNAmeEnd before: $fileNAmeEnd');
+  }
   while (true) {
     if (!File('$currentPath/$fileNAmeEnd').existsSync()) {
       break; // Exit the loop if the file doesn't exist
@@ -140,8 +184,15 @@ File _createZipFile(currentPath, fileName) {
     //   break;
     // }
   }
-  final zipFile = File('$currentPath/$fileNAmeEnd');
-
+  final zipFile = isFile
+      ? File('$currentPath/$fileNAmeEnd')
+      : File('$currentPath/${fileNAmeEnd.replaceFirst(RegExp(r'\.zip$'), '')}');
+  if (isFile) {
+    if (kDebugMode) {
+      print(
+          'fileNAmeEnd $isFile edited: ${fileNAmeEnd.replaceFirst(RegExp(r'\.zip$'), '')}');
+    }
+  }
   return zipFile;
 }
 
@@ -175,6 +226,10 @@ createFolder(BuildContext context, FileManagerController controller) {
           )),
           actions: [
             CupertinoDialogAction(
+                isDestructiveAction: true,
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel')),
+            CupertinoDialogAction(
               isDefaultAction: true,
               onPressed: () async {
                 try {
@@ -198,10 +253,6 @@ createFolder(BuildContext context, FileManagerController controller) {
               },
               child: const Text('Create'),
             ),
-            CupertinoDialogAction(
-                isDestructiveAction: true,
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel')),
           ],
         );
       });
@@ -212,6 +263,7 @@ Future<dynamic> show(BuildContext context, Widget builder, bool expand) {
     expand: expand,
     isDismissible: true,
     context: context,
+    //useRootNavigator: true,
     backgroundColor: CupertinoColors.secondarySystemBackground,
     builder: (context) => builder,
   );
@@ -242,3 +294,246 @@ final DecorationTween tween = DecorationTween(
     borderRadius: BorderRadius.circular(20.0),
   ),
 );
+
+ObstructingPreferredSizeWidget fileManagerNavbar(
+  BuildContext context,
+  CustomPopupMenuController controllerMiddle,
+  FileManagerController controller,
+  CustomPopupMenuController controllerTrailing,
+  VoidCallback setStateCaller,
+  String? appTitle,
+  Widget showExtension,
+) {
+  var i = Provider.of<MyStringModel>(context, listen: false);
+
+  return CupertinoNavigationBar(
+    ///title pop up menu
+    middle: CustomPopupMenu(
+      controller: controllerMiddle,
+      enablePassEvent: false,
+      pressType: PressType.longPress,
+      child: ValueListenableBuilder(
+          valueListenable: controller.titleNotifier,
+          builder: (context, title, _) {
+            return Text(
+              title == '0' ? appTitle ?? '' : title,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            );
+          }),
+      menuBuilder: () => ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width / 2,
+          child: CupertinoListSection(
+            topMargin: 0,
+            children: [
+              CupertinoListTile(
+                onTap: () {
+                  controllerMiddle.hideMenu();
+                  createFolder(context, controller);
+                },
+                title: const Text('New Folder'),
+                trailing: const Icon(CupertinoIcons.folder_fill_badge_plus),
+              ),
+              if (i.isFile.isNotEmpty)
+                CupertinoListTile(
+                  onTap: () {
+                    controllerMiddle.hideMenu();
+                    if (i.isFile == 'true') {
+                      i.taskName == 'Move'
+                          ? moveFile(i.myString, controller.getCurrentPath)
+                          : copyFiles(i.myString, controller.getCurrentPath);
+                      setStateCaller();
+                      // setState(() {});
+                    } else if (i.isFile == 'false') {
+                      i.taskName == 'Move'
+                          ? movePath(i.myString, controller.getCurrentPath)
+                          : copyPath(i.myString, controller.getCurrentPath);
+                      setStateCaller();
+                      //setState(() {});
+                    }
+                    if (kDebugMode) {
+                      print('path: ${i.myString}');
+                      print('task; ${i.taskName}');
+                      print(controller.getCurrentPath);
+                      print('isFile: ${i.isFile}');
+                    }
+                  },
+                  title: const Text('Paste'),
+                  trailing: const Icon(CupertinoIcons.doc_on_clipboard),
+                ),
+              CupertinoListTile(
+                onTap: () {
+                  controllerMiddle.hideMenu();
+                },
+                title: const Text('Get Info'),
+                trailing: const Icon(CupertinoIcons.info_circle),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+
+    ///top right pop up menu
+    trailing: CustomPopupMenu(
+      controller: controllerTrailing,
+      enablePassEvent: false,
+      pressType: PressType.singleClick,
+      child: const Icon(CupertinoIcons.ellipsis_circle, color: Colors.blue),
+      menuBuilder: () => ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width / 1.4,
+          child: CupertinoListSection(
+            topMargin: 0,
+            children: [
+              CupertinoListTile(
+                onTap: () {
+                  createFolder(context, controller);
+                  controllerTrailing.hideMenu();
+                },
+                title: const Text('New Folder'),
+                trailing: const Icon(
+                    CupertinoIcons.slider_horizontal_below_rectangle),
+              ),
+              if (i.isFile.isNotEmpty)
+                CupertinoListTile(
+                  onTap: () {
+                    controllerTrailing.hideMenu();
+
+                    if (i.isFile == 'true') {
+                      i.taskName == 'Move'
+                          ? moveFile(i.myString, controller.getCurrentPath)
+                          : copyFiles(i.myString, controller.getCurrentPath);
+                      setStateCaller();
+                      // setState(() {});
+                    } else if (i.isFile == 'false') {
+                      i.taskName == 'Move'
+                          ? movePath(i.myString, controller.getCurrentPath)
+                          : copyPath(i.myString, controller.getCurrentPath);
+                      setStateCaller();
+                      // setState(() {});
+                    }
+                    if (kDebugMode) {
+                      print('path: ${i.myString}');
+                      print('task; ${i.taskName}');
+                      print(controller.getCurrentPath);
+                      print('isFile: ${i.isFile}');
+                    }
+                  },
+                  title: const Text('Paste'),
+                  trailing: const Icon(CupertinoIcons.doc_on_clipboard_fill),
+                ),
+              CupertinoListTile(
+                  onTap: () {
+                    controllerTrailing.hideMenu();
+                  },
+                  title: const Text('Icons')),
+              CupertinoListTile(
+                  onTap: () {
+                    controllerTrailing.hideMenu();
+                  },
+                  title: const Text('List')),
+              CupertinoListTile(
+                  onTap: () {
+                    controllerTrailing.hideMenu();
+                  },
+                  title: const Text('Name')),
+              CupertinoListTile(
+                  onTap: () {
+                    controllerTrailing.hideMenu();
+                  },
+                  title: const Text('Kind')),
+              CupertinoListTile(
+                  onTap: () {
+                    controllerTrailing.hideMenu();
+                  },
+                  title: const Text('Date')),
+              CupertinoListTile(
+                  onTap: () {
+                    controllerTrailing.hideMenu();
+                  },
+                  title: const Text('Size')),
+              CupertinoListTile(
+                  onTap: () {
+                    show(context, const ConnectToServer(), true);
+                    controllerTrailing.hideMenu();
+                  },
+                  title: const Text('Tags')),
+
+              ///widget
+              showExtension,
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class ShowExtensionWidget extends StatefulWidget {
+  const ShowExtensionWidget({
+    super.key,
+    required this.customPopupMenuController,
+  });
+
+  final CustomPopupMenuController customPopupMenuController;
+
+  @override
+  State<ShowExtensionWidget> createState() => _ShowExtensionWidgetState();
+}
+
+class _ShowExtensionWidgetState extends State<ShowExtensionWidget> {
+  // final BoolStorage _boolStorage = BoolStorage();
+  // bool _boolValue = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // _loadBoolValue();
+  }
+
+  // Future<void> _loadBoolValue() async {
+  //   bool value = await _boolStorage.getBool();
+  //   // if (value != _boolValue) {
+  //   //   WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+  //   //     var i = Provider.of<MyStringModel>(context, listen: false);
+  //   //     print(
+  //   //         'updated provider ${i.showAllExtension}from _loadBoolValue() :$_boolValue');
+  //   //     i.setShowAllExtension(_boolValue);
+  //   //   });
+  //   // }
+  //
+  //   setState(() {
+  //     _boolValue = value;
+  //   });
+  // }
+
+  // Future<bool> _toggleBoolValue() async {
+  //   bool newValue = !_boolValue;
+  //   await _boolStorage.setBool(newValue);
+  //   // WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+  //   //   var i = Provider.of<MyStringModel>(context, listen: false);
+  //   //   print(
+  //   //       'updated provider: ${i.showAllExtension}from _toggleBoolValue() ,_boolValue:$_boolValue');
+  //   //   i.setShowAllExtension(_boolValue);
+  //   // });
+  //   return newValue;
+  // }
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoListTile(
+        leading: !Provider.of<ShowAllExtensionPrefs>(context).value
+            ? const Icon(CupertinoIcons.check_mark)
+            : null,
+        onTap: () async {
+          Provider.of<ShowAllExtensionPrefs>(context, listen: false)
+              .toggleValue();
+
+          widget.customPopupMenuController.hideMenu();
+        },
+        title: const Text('Show All Extensions'));
+  }
+}

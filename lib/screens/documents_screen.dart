@@ -4,18 +4,19 @@ import 'package:custom_pop_up_menu_fork/custom_pop_up_menu.dart';
 import 'package:file_manager/file_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:open_file/open_file.dart';
 import 'package:provider/provider.dart';
+import 'package:xfiles/support/show_all_extension_prefs.dart';
 
-import '../common/common.dart';
-import '../support/share_prefs.dart';
-import '../widgets/empty_folder_screen.dart';
 import '/support/provider_model.dart';
 import '/widgets/error_screen.dart';
 import '/widgets/loading_screen.dart';
+import '../common/common.dart';
+import '../support/share_prefs.dart';
+import '../widgets/empty_folder_screen.dart';
 import 'folder.dart';
+import 'support_screens/connect_ftp_page.dart';
 
 class DocumentScreen extends StatefulWidget {
   const DocumentScreen({super.key, required this.title});
@@ -31,7 +32,8 @@ class _DocumentScreenState extends State<DocumentScreen> {
   final CustomPopupMenuController _controller = CustomPopupMenuController();
   final CustomPopupMenuController _controller1 = CustomPopupMenuController();
   final BoolStorage _boolStorage = BoolStorage();
-  bool _boolValue = false;
+
+  //bool _boolValue = false;
 
   @override
   void dispose() {
@@ -41,23 +43,32 @@ class _DocumentScreenState extends State<DocumentScreen> {
   @override
   void initState() {
     super.initState();
-    _loadBoolValue();
+    // _loadBoolValue();
   }
 
-  Future<void> _loadBoolValue() async {
-    bool value = await _boolStorage.getBool();
-    setState(() {
-      _boolValue = value;
-    });
-  }
+  // Future<void> _loadBoolValue() async {
+  //   bool value = await _boolStorage.getBool();
+  //   if (value != _boolValue) {
+  //     setState(() {
+  //       _boolValue = value;
+  //     });
+  //     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+  //       var i = Provider.of<MyStringModel>(context, listen: false);
+  //       print(
+  //           'updated provider ${i.showAllExtension}from _loadBoolValue() :$_boolValue');
+  //       i.setShowAllExtension(_boolValue);
+  //     });
+  //   }
+  // }
 
-  Future<void> _toggleBoolValue() async {
-    bool newValue = !_boolValue;
-    await _boolStorage.setBool(newValue);
-    setState(() {
-      _boolValue = newValue;
-    });
-  }
+  //
+  // Future<void> _toggleBoolValue() async {
+  //   bool newValue = !_boolValue;
+  //   await _boolStorage.setBool(newValue);
+  //   setState(() {
+  //     _boolValue = newValue;
+  //   });
+  // }
 
   Animation<Decoration> _boxDecorationAnimation(Animation<double> animation) {
     return tween.animate(
@@ -71,184 +82,208 @@ class _DocumentScreenState extends State<DocumentScreen> {
     );
   }
 
+  void setStateCaller() {
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
-    var i = Provider.of<MyStringModel>(context, listen: false);
-
+    var i = Provider.of<MyStringModel>(context, listen: true);
+    //  print(
+    //  'before provider ${i.showAllExtension} ShowExtensionWidget :$_boolValue');
+    //i.setShowAllExtension(_boolValue);
+    // print(
+    //   ' provider ${i.showAllExtension} ShowExtensionWidget :${i.showAllExtension}');
     return CupertinoPageScaffold(
       resizeToAvoidBottomInset: true,
-      navigationBar: CupertinoNavigationBar(
-          middle: CustomPopupMenu(
-            controller: _controller1,
-            enablePassEvent: false,
-            pressType: PressType.longPress,
-            child: ValueListenableBuilder(
-                valueListenable: controller.titleNotifier,
-                builder: (context, title, _) {
-                  return Text(
-                    title == '0' ? widget.title : title,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  );
-                }),
-            menuBuilder: () => ClipRRect(
-              borderRadius: BorderRadius.circular(15),
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width / 2,
-                child: CupertinoListSection(
-                  topMargin: 0,
-                  children: [
-                    CupertinoListTile(
-                      onTap: () {
-                        _controller1.hideMenu();
-                        createFolder(context, controller);
-                      },
-                      title: const Text('New Folder'),
-                      trailing:
-                          const Icon(CupertinoIcons.folder_fill_badge_plus),
-                    ),
-                    if (i.isFile.isNotEmpty)
-                      CupertinoListTile(
-                        onTap: () {
-                          _controller1.hideMenu();
-                          if (i.isFile == 'true') {
-                            i.taskName == 'Move'
-                                ? moveFile(
-                                    i.myString, controller.getCurrentPath)
-                                : copyFiles(
-                                    i.myString, controller.getCurrentPath);
-                            setState(() {});
-                          } else if (i.isFile == 'false') {
-                            i.taskName == 'Move'
-                                ? movePath(
-                                    i.myString, controller.getCurrentPath)
-                                : copyPath(
-                                    i.myString, controller.getCurrentPath);
-                            setState(() {});
-                          }
-                          if (kDebugMode) {
-                            print('path: ${i.myString}');
-                            print('task; ${i.taskName}');
-                            print(controller.getCurrentPath);
-                            print('isFile: ${i.isFile}');
-                          }
-                        },
-                        title: const Text('Paste'),
-                        trailing: const Icon(CupertinoIcons.doc_on_clipboard),
-                      ),
-                    CupertinoListTile(
-                      onTap: () {
-                        _controller1.hideMenu();
-                      },
-                      title: const Text('Get Info'),
-                      trailing: const Icon(CupertinoIcons.info_circle),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          trailing: CustomPopupMenu(
-            controller: _controller,
-            enablePassEvent: false,
-            pressType: PressType.singleClick,
-            child:
-                const Icon(CupertinoIcons.ellipsis_circle, color: Colors.blue),
-            menuBuilder: () => ClipRRect(
-              borderRadius: BorderRadius.circular(15),
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width / 1.4,
-                child: CupertinoListSection(
-                  topMargin: 0,
-                  children: [
-                    CupertinoListTile(
-                      onTap: () {
-                        createFolder(context, controller);
-                        _controller.hideMenu();
-                      },
-                      title: const Text('New Folder'),
-                      trailing: const Icon(
-                          CupertinoIcons.slider_horizontal_below_rectangle),
-                    ),
-                    if (i.isFile.isNotEmpty)
-                      CupertinoListTile(
-                        onTap: () {
-                          _controller.hideMenu();
-
-                          if (i.isFile == 'true') {
-                            i.taskName == 'Move'
-                                ? moveFile(
-                                    i.myString, controller.getCurrentPath)
-                                : copyFiles(
-                                    i.myString, controller.getCurrentPath);
-                            setState(() {});
-                          } else if (i.isFile == 'false') {
-                            i.taskName == 'Move'
-                                ? movePath(
-                                    i.myString, controller.getCurrentPath)
-                                : copyPath(
-                                    i.myString, controller.getCurrentPath);
-                            setState(() {});
-                          }
-                          if (kDebugMode) {
-                            print('path: ${i.myString}');
-                            print('task; ${i.taskName}');
-                            print(controller.getCurrentPath);
-                            print('isFile: ${i.isFile}');
-                          }
-                        },
-                        title: const Text('Paste'),
-                        trailing:
-                            const Icon(CupertinoIcons.doc_on_clipboard_fill),
-                      ),
-                    CupertinoListTile(
-                        onTap: () {
-                          _controller.hideMenu();
-                        },
-                        title: const Text('Icons')),
-                    CupertinoListTile(
-                        onTap: () {
-                          _controller.hideMenu();
-                        },
-                        title: const Text('List')),
-                    CupertinoListTile(
-                        onTap: () {
-                          _controller.hideMenu();
-                        },
-                        title: const Text('Name')),
-                    CupertinoListTile(
-                        onTap: () {
-                          _controller.hideMenu();
-                        },
-                        title: const Text('Kind')),
-                    CupertinoListTile(
-                        onTap: () {
-                          _controller.hideMenu();
-                        },
-                        title: const Text('Date')),
-                    CupertinoListTile(
-                        onTap: () {
-                          _controller.hideMenu();
-                        },
-                        title: const Text('Size')),
-                    CupertinoListTile(
-                        onTap: () {
-                          _controller.hideMenu();
-                        },
-                        title: const Text('Tags')),
-                    CupertinoListTile(
-                        leading: !_boolValue
-                            ? const Icon(CupertinoIcons.check_mark)
-                            : const Text(''),
-                        onTap: () {
-                          _toggleBoolValue();
-                          _controller.hideMenu();
-                        },
-                        title: const Text('Show All Extensions')),
-                  ],
-                ),
-              ),
-            ),
-          )),
+      navigationBar: fileManagerNavbar(
+        context,
+        _controller1,
+        controller,
+        _controller,
+        setStateCaller,
+        widget.title,
+        ShowExtensionWidget(
+          customPopupMenuController: _controller,
+        ),
+      ),
+      // navigationBar: CupertinoNavigationBar(
+      //
+      //     ///title pop up menu
+      //     middle: CustomPopupMenu(
+      //       controller: _controller1,
+      //       enablePassEvent: false,
+      //       pressType: PressType.longPress,
+      //       child: ValueListenableBuilder(
+      //           valueListenable: controller.titleNotifier,
+      //           builder: (context, title, _) {
+      //             return Text(
+      //               title == '0' ? widget.title : title,
+      //               style: const TextStyle(fontWeight: FontWeight.bold),
+      //             );
+      //           }),
+      //       menuBuilder: () => ClipRRect(
+      //         borderRadius: BorderRadius.circular(15),
+      //         child: SizedBox(
+      //           width: MediaQuery.of(context).size.width / 2,
+      //           child: CupertinoListSection(
+      //             topMargin: 0,
+      //             children: [
+      //               CupertinoListTile(
+      //                 onTap: () {
+      //                   _controller1.hideMenu();
+      //                   createFolder(context, controller);
+      //                 },
+      //                 title: const Text('New Folder'),
+      //                 trailing:
+      //                     const Icon(CupertinoIcons.folder_fill_badge_plus),
+      //               ),
+      //               if (i.isFile.isNotEmpty)
+      //                 CupertinoListTile(
+      //                   onTap: () {
+      //                     _controller1.hideMenu();
+      //                     if (i.isFile == 'true') {
+      //                       i.taskName == 'Move'
+      //                           ? moveFile(
+      //                               i.myString, controller.getCurrentPath)
+      //                           : copyFiles(
+      //                               i.myString, controller.getCurrentPath);
+      //                       setState(() {});
+      //                     } else if (i.isFile == 'false') {
+      //                       i.taskName == 'Move'
+      //                           ? movePath(
+      //                               i.myString, controller.getCurrentPath)
+      //                           : copyPath(
+      //                               i.myString, controller.getCurrentPath);
+      //                       setState(() {});
+      //                     }
+      //                     if (kDebugMode) {
+      //                       print('path: ${i.myString}');
+      //                       print('task; ${i.taskName}');
+      //                       print(controller.getCurrentPath);
+      //                       print('isFile: ${i.isFile}');
+      //                     }
+      //                   },
+      //                   title: const Text('Paste'),
+      //                   trailing: const Icon(CupertinoIcons.doc_on_clipboard),
+      //                 ),
+      //               CupertinoListTile(
+      //                 onTap: () {
+      //                   _controller1.hideMenu();
+      //                 },
+      //                 title: const Text('Get Info'),
+      //                 trailing: const Icon(CupertinoIcons.info_circle),
+      //               ),
+      //             ],
+      //           ),
+      //         ),
+      //       ),
+      //     ),
+      //
+      //     ///top right pop up menu
+      //     trailing: CustomPopupMenu(
+      //       controller: _controller,
+      //       enablePassEvent: false,
+      //       pressType: PressType.singleClick,
+      //       child:
+      //           const Icon(CupertinoIcons.ellipsis_circle, color: Colors.blue),
+      //       menuBuilder: () => ClipRRect(
+      //         borderRadius: BorderRadius.circular(15),
+      //         child: SizedBox(
+      //           width: MediaQuery.of(context).size.width / 1.4,
+      //           child: CupertinoListSection(
+      //             topMargin: 0,
+      //             children: [
+      //               CupertinoListTile(
+      //                 onTap: () {
+      //                   createFolder(context, controller);
+      //                   _controller.hideMenu();
+      //                 },
+      //                 title: const Text('New Folder'),
+      //                 trailing: const Icon(
+      //                     CupertinoIcons.slider_horizontal_below_rectangle),
+      //               ),
+      //               if (i.isFile.isNotEmpty)
+      //                 CupertinoListTile(
+      //                   onTap: () {
+      //                     _controller.hideMenu();
+      //
+      //                     if (i.isFile == 'true') {
+      //                       i.taskName == 'Move'
+      //                           ? moveFile(
+      //                               i.myString, controller.getCurrentPath)
+      //                           : copyFiles(
+      //                               i.myString, controller.getCurrentPath);
+      //                       setState(() {});
+      //                     } else if (i.isFile == 'false') {
+      //                       i.taskName == 'Move'
+      //                           ? movePath(
+      //                               i.myString, controller.getCurrentPath)
+      //                           : copyPath(
+      //                               i.myString, controller.getCurrentPath);
+      //                       setState(() {});
+      //                     }
+      //                     if (kDebugMode) {
+      //                       print('path: ${i.myString}');
+      //                       print('task; ${i.taskName}');
+      //                       print(controller.getCurrentPath);
+      //                       print('isFile: ${i.isFile}');
+      //                     }
+      //                   },
+      //                   title: const Text('Paste'),
+      //                   trailing:
+      //                       const Icon(CupertinoIcons.doc_on_clipboard_fill),
+      //                 ),
+      //               CupertinoListTile(
+      //                   onTap: () {
+      //                     _controller.hideMenu();
+      //                   },
+      //                   title: const Text('Icons')),
+      //               CupertinoListTile(
+      //                   onTap: () {
+      //                     _controller.hideMenu();
+      //                   },
+      //                   title: const Text('List')),
+      //               CupertinoListTile(
+      //                   onTap: () {
+      //                     _controller.hideMenu();
+      //                   },
+      //                   title: const Text('Name')),
+      //               CupertinoListTile(
+      //                   onTap: () {
+      //                     _controller.hideMenu();
+      //                   },
+      //                   title: const Text('Kind')),
+      //               CupertinoListTile(
+      //                   onTap: () {
+      //                     _controller.hideMenu();
+      //                   },
+      //                   title: const Text('Date')),
+      //               CupertinoListTile(
+      //                   onTap: () {
+      //                     _controller.hideMenu();
+      //                   },
+      //                   title: const Text('Size')),
+      //               CupertinoListTile(
+      //                   onTap: () {
+      //                     show(context, const ConnectToServer(), true);
+      //                     _controller.hideMenu();
+      //                   },
+      //                   title: const Text('Tags')),
+      //               CupertinoListTile(
+      //                   leading: !_boolValue
+      //                       ? const Icon(CupertinoIcons.check_mark)
+      //                       : const Text(''),
+      //                   onTap: () {
+      //                     _toggleBoolValue();
+      //                     _controller.hideMenu();
+      //                   },
+      //                   title: const Text('Show All Extensions')),
+      //             ],
+      //           ),
+      //         ),
+      //       ),
+      //     )),
       child: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -272,6 +307,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
                       ...List.generate(entities.length, (index) {
                         FileSystemEntity entity = entities[index];
 
+                        ///Slidable widget
                         return Slidable(
                           key: UniqueKey(),
                           endActionPane: ActionPane(
@@ -309,9 +345,11 @@ class _DocumentScreenState extends State<DocumentScreen> {
                           ),
                           child: Builder(
                             builder: (BuildContext ctx) {
+                              ///List Item OnClick Pop up Menu
                               return CupertinoContextMenu.builder(
                                   enableHapticFeedback: true,
                                   actions: <Widget>[
+                                    ///Get Info
                                     CupertinoContextMenuAction(
                                       onPressed: () {
                                         Navigator.pop(ctx);
@@ -319,6 +357,8 @@ class _DocumentScreenState extends State<DocumentScreen> {
                                       trailingIcon: CupertinoIcons.info_circle,
                                       child: const Text('Get Info'),
                                     ),
+
+                                    /// Rename
                                     CupertinoContextMenuAction(
                                       onPressed: () {
                                         Navigator.pop(ctx);
@@ -326,12 +366,19 @@ class _DocumentScreenState extends State<DocumentScreen> {
                                       trailingIcon: CupertinoIcons.pencil,
                                       child: const Text('Rename'),
                                     ),
+
+                                    ///compress || uncompress
                                     CupertinoContextMenuAction(
                                       onPressed: () {
                                         Navigator.pop(ctx);
-                                        zipTheFile(
-                                            controller.getCurrentDirectory,
-                                            entity.path);
+                                        FileManager.isFile(entity)
+                                            ? zipTheFile(
+                                                controller.getCurrentDirectory,
+                                                entity.path)
+                                            : zipTheDirectory(
+                                                Directory(i
+                                                    .internalStorageRootDirectory),
+                                                FileManager.basename(entity));
                                         setState(() {});
                                       },
                                       trailingIcon: CupertinoIcons.archivebox,
@@ -344,6 +391,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
                                           ? const Text('Uncompress')
                                           : const Text('Compress'),
                                     ),
+
                                     // CupertinoContextMenuAction(
                                     //   onPressed: () {
                                     //     Navigator.pop(ctx);
@@ -367,6 +415,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
                                     //   trailingIcon: CupertinoIcons.heart,
                                     //   child: const Text('Favorite'),
                                     // ),
+                                    ///Copy
                                     CupertinoContextMenuAction(
                                       onPressed: () {
                                         Navigator.of(ctx).pop();
@@ -384,6 +433,8 @@ class _DocumentScreenState extends State<DocumentScreen> {
                                           CupertinoIcons.doc_on_clipboard_fill,
                                       child: const Text('Copy'),
                                     ),
+
+                                    ///Move
                                     CupertinoContextMenuAction(
                                       onPressed: () {
                                         Navigator.pop(ctx);
@@ -399,13 +450,19 @@ class _DocumentScreenState extends State<DocumentScreen> {
                                       trailingIcon: CupertinoIcons.folder,
                                       child: const Text('Move'),
                                     ),
+
+                                    ///Share
                                     CupertinoContextMenuAction(
                                       onPressed: () {
                                         Navigator.pop(ctx);
+                                        show(context, const ConnectToServer(),
+                                            true);
                                       },
                                       trailingIcon: CupertinoIcons.share,
                                       child: const Text('Share'),
                                     ),
+
+                                    ///Delete
                                     CupertinoContextMenuAction(
                                       onPressed: () async {
                                         Navigator.pop(context);
@@ -489,7 +546,7 @@ class _DocumentScreenState extends State<DocumentScreen> {
 
                                                 if (kDebugMode) {
                                                   print(
-                                                      'current path document: ${controller.getCurrentPath}');
+                                                      'current path from root: ${controller.getCurrentPath}');
                                                 }
                                               } else {
                                                 // Perform file-related tasks.
@@ -508,7 +565,9 @@ class _DocumentScreenState extends State<DocumentScreen> {
                                             title: Text(
                                               FileManager.isDirectory(entity)
                                                   ? FileManager.basename(entity)
-                                                  : _boolValue
+                                                  : Provider.of<ShowAllExtensionPrefs>(
+                                                              context)
+                                                          .value
                                                       ? entity.path
                                                           .split('/')
                                                           .last

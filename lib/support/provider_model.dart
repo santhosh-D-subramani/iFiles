@@ -6,6 +6,7 @@ class MyStringModel extends ChangeNotifier {
   String _taskName = '';
   String _internalStorageRootDirectory = '';
   String _sdCardRootDirectory = '';
+  bool _showAllExtension = false;
 
   String get myString => _myString;
 
@@ -17,12 +18,20 @@ class MyStringModel extends ChangeNotifier {
 
   String get sdCardRootDirectory => _sdCardRootDirectory;
 
+  bool get showAllExtension => _showAllExtension;
+
+  void setShowAllExtension(bool value) {
+    _showAllExtension = value;
+    notifyListeners();
+  }
+
   void setStoragePath(String internal, String external) {
     _internalStorageRootDirectory = internal;
     _sdCardRootDirectory = external;
     notifyListeners();
   }
 
+  ///copy move
   void updateString(String path, String isFile, String taskName) {
     _myString = path;
     _isFile = isFile;

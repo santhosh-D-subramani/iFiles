@@ -50,6 +50,8 @@ dependencies:
   samba_browser: ^0.0.2
   provider: ^6.1.2
   flutter_archive: ^6.0.3
+  firebase_crashlytics: ^3.5.5
+  firebase_analytics: ^10.10.5
 
 dev_dependencies:
   flutter_test:
