@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 
 import '/common/common.dart';
 import '/screens/browse_page.dart';
+import '/support/file_restore_provider.dart';
 import '/support/provider_model.dart';
 import '/support/show_all_extension_prefs.dart';
 import 'firebase_options.dart';
@@ -37,6 +38,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => MyStringModel()),
         ChangeNotifierProvider(create: (_) => ShowAllExtensionPrefs()),
+        ChangeNotifierProvider(create: (_) => FileProvider()),
       ],
       child: const MyApp(),
     ),

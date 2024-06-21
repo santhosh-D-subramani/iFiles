@@ -25,10 +25,13 @@ Widget errorScreen(error) {
                 fontSize: 20,
               ),
             ),
-          Text(
-            error.toString(),
-            style: const TextStyle(
-              fontSize: 16,
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              error.toString(),
+              style: const TextStyle(
+                fontSize: 16,
+              ),
             ),
           ),
         ],

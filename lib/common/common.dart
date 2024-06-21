@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:custom_pop_up_menu_fork/custom_pop_up_menu.dart';
 import 'package:file_manager/file_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -10,11 +9,6 @@ import 'package:flutter_archive/flutter_archive.dart';
 import 'package:intl/intl.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:path/path.dart' as Path;
-import 'package:provider/provider.dart';
-import 'package:xfiles/support/show_all_extension_prefs.dart';
-
-import '../screens/support_screens/connect_ftp_page.dart';
-import '../support/provider_model.dart';
 
 const appName = 'iFiles';
 const browsePageTitle = 'Browse';
@@ -295,245 +289,14 @@ final DecorationTween tween = DecorationTween(
   ),
 );
 
-ObstructingPreferredSizeWidget fileManagerNavbar(
-  BuildContext context,
-  CustomPopupMenuController controllerMiddle,
-  FileManagerController controller,
-  CustomPopupMenuController controllerTrailing,
-  VoidCallback setStateCaller,
-  String? appTitle,
-  Widget showExtension,
-) {
-  var i = Provider.of<MyStringModel>(context, listen: false);
-
-  return CupertinoNavigationBar(
-    ///title pop up menu
-    middle: CustomPopupMenu(
-      controller: controllerMiddle,
-      enablePassEvent: false,
-      pressType: PressType.longPress,
-      child: ValueListenableBuilder(
-          valueListenable: controller.titleNotifier,
-          builder: (context, title, _) {
-            return Text(
-              title == '0' ? appTitle ?? '' : title,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            );
-          }),
-      menuBuilder: () => ClipRRect(
-        borderRadius: BorderRadius.circular(15),
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width / 2,
-          child: CupertinoListSection(
-            topMargin: 0,
-            children: [
-              CupertinoListTile(
-                onTap: () {
-                  controllerMiddle.hideMenu();
-                  createFolder(context, controller);
-                },
-                title: const Text('New Folder'),
-                trailing: const Icon(CupertinoIcons.folder_fill_badge_plus),
-              ),
-              if (i.isFile.isNotEmpty)
-                CupertinoListTile(
-                  onTap: () {
-                    controllerMiddle.hideMenu();
-                    if (i.isFile == 'true') {
-                      i.taskName == 'Move'
-                          ? moveFile(i.myString, controller.getCurrentPath)
-                          : copyFiles(i.myString, controller.getCurrentPath);
-                      setStateCaller();
-                      // setState(() {});
-                    } else if (i.isFile == 'false') {
-                      i.taskName == 'Move'
-                          ? movePath(i.myString, controller.getCurrentPath)
-                          : copyPath(i.myString, controller.getCurrentPath);
-                      setStateCaller();
-                      //setState(() {});
-                    }
-                    if (kDebugMode) {
-                      print('path: ${i.myString}');
-                      print('task; ${i.taskName}');
-                      print(controller.getCurrentPath);
-                      print('isFile: ${i.isFile}');
-                    }
-                  },
-                  title: const Text('Paste'),
-                  trailing: const Icon(CupertinoIcons.doc_on_clipboard),
-                ),
-              CupertinoListTile(
-                onTap: () {
-                  controllerMiddle.hideMenu();
-                },
-                title: const Text('Get Info'),
-                trailing: const Icon(CupertinoIcons.info_circle),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-
-    ///top right pop up menu
-    trailing: CustomPopupMenu(
-      controller: controllerTrailing,
-      enablePassEvent: false,
-      pressType: PressType.singleClick,
-      child: const Icon(CupertinoIcons.ellipsis_circle, color: Colors.blue),
-      menuBuilder: () => ClipRRect(
-        borderRadius: BorderRadius.circular(15),
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width / 1.4,
-          child: CupertinoListSection(
-            topMargin: 0,
-            children: [
-              CupertinoListTile(
-                onTap: () {
-                  createFolder(context, controller);
-                  controllerTrailing.hideMenu();
-                },
-                title: const Text('New Folder'),
-                trailing: const Icon(
-                    CupertinoIcons.slider_horizontal_below_rectangle),
-              ),
-              if (i.isFile.isNotEmpty)
-                CupertinoListTile(
-                  onTap: () {
-                    controllerTrailing.hideMenu();
-
-                    if (i.isFile == 'true') {
-                      i.taskName == 'Move'
-                          ? moveFile(i.myString, controller.getCurrentPath)
-                          : copyFiles(i.myString, controller.getCurrentPath);
-                      setStateCaller();
-                      // setState(() {});
-                    } else if (i.isFile == 'false') {
-                      i.taskName == 'Move'
-                          ? movePath(i.myString, controller.getCurrentPath)
-                          : copyPath(i.myString, controller.getCurrentPath);
-                      setStateCaller();
-                      // setState(() {});
-                    }
-                    if (kDebugMode) {
-                      print('path: ${i.myString}');
-                      print('task; ${i.taskName}');
-                      print(controller.getCurrentPath);
-                      print('isFile: ${i.isFile}');
-                    }
-                  },
-                  title: const Text('Paste'),
-                  trailing: const Icon(CupertinoIcons.doc_on_clipboard_fill),
-                ),
-              CupertinoListTile(
-                  onTap: () {
-                    controllerTrailing.hideMenu();
-                  },
-                  title: const Text('Icons')),
-              CupertinoListTile(
-                  onTap: () {
-                    controllerTrailing.hideMenu();
-                  },
-                  title: const Text('List')),
-              CupertinoListTile(
-                  onTap: () {
-                    controllerTrailing.hideMenu();
-                  },
-                  title: const Text('Name')),
-              CupertinoListTile(
-                  onTap: () {
-                    controllerTrailing.hideMenu();
-                  },
-                  title: const Text('Kind')),
-              CupertinoListTile(
-                  onTap: () {
-                    controllerTrailing.hideMenu();
-                  },
-                  title: const Text('Date')),
-              CupertinoListTile(
-                  onTap: () {
-                    controllerTrailing.hideMenu();
-                  },
-                  title: const Text('Size')),
-              CupertinoListTile(
-                  onTap: () {
-                    show(context, const ConnectToServer(), true);
-                    controllerTrailing.hideMenu();
-                  },
-                  title: const Text('Tags')),
-
-              ///widget
-              showExtension,
-            ],
-          ),
-        ),
+Animation<Decoration> boxDecorationAnimationX(Animation<double> animation) {
+  return tween.animate(
+    CurvedAnimation(
+      parent: animation,
+      curve: Interval(
+        0.0,
+        CupertinoContextMenu.animationOpensAt,
       ),
     ),
   );
-}
-
-class ShowExtensionWidget extends StatefulWidget {
-  const ShowExtensionWidget({
-    super.key,
-    required this.customPopupMenuController,
-  });
-
-  final CustomPopupMenuController customPopupMenuController;
-
-  @override
-  State<ShowExtensionWidget> createState() => _ShowExtensionWidgetState();
-}
-
-class _ShowExtensionWidgetState extends State<ShowExtensionWidget> {
-  // final BoolStorage _boolStorage = BoolStorage();
-  // bool _boolValue = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // _loadBoolValue();
-  }
-
-  // Future<void> _loadBoolValue() async {
-  //   bool value = await _boolStorage.getBool();
-  //   // if (value != _boolValue) {
-  //   //   WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-  //   //     var i = Provider.of<MyStringModel>(context, listen: false);
-  //   //     print(
-  //   //         'updated provider ${i.showAllExtension}from _loadBoolValue() :$_boolValue');
-  //   //     i.setShowAllExtension(_boolValue);
-  //   //   });
-  //   // }
-  //
-  //   setState(() {
-  //     _boolValue = value;
-  //   });
-  // }
-
-  // Future<bool> _toggleBoolValue() async {
-  //   bool newValue = !_boolValue;
-  //   await _boolStorage.setBool(newValue);
-  //   // WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-  //   //   var i = Provider.of<MyStringModel>(context, listen: false);
-  //   //   print(
-  //   //       'updated provider: ${i.showAllExtension}from _toggleBoolValue() ,_boolValue:$_boolValue');
-  //   //   i.setShowAllExtension(_boolValue);
-  //   // });
-  //   return newValue;
-  // }
-
-  @override
-  Widget build(BuildContext context) {
-    return CupertinoListTile(
-        leading: !Provider.of<ShowAllExtensionPrefs>(context).value
-            ? const Icon(CupertinoIcons.check_mark)
-            : null,
-        onTap: () async {
-          Provider.of<ShowAllExtensionPrefs>(context, listen: false)
-              .toggleValue();
-
-          widget.customPopupMenuController.hideMenu();
-        },
-        title: const Text('Show All Extensions'));
-  }
 }
